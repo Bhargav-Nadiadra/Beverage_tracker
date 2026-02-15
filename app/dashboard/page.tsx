@@ -49,6 +49,21 @@ export default async function DashboardPage() {
     const firstLog = statsResult.rows[0]?.first_log ? new Date(statsResult.rows[0].first_log).toISOString() : null;
     const lastLog = statsResult.rows[0]?.last_log ? new Date(statsResult.rows[0].last_log).toISOString() : null;
 
+    // Fetch today's raw logs for deletion management
+    const todayLogsResult = await db.query(
+        `SELECT id, beverage_type, logged_at 
+         FROM beverage_logs 
+         WHERE user_id = $1 
+         AND logged_at >= CURRENT_DATE
+         ORDER BY logged_at DESC`,
+        [userId]
+    );
+
+    const todayLogs = todayLogsResult.rows.map(row => ({
+        ...row,
+        logged_at: row.logged_at.toISOString()
+    }));
+
     // Fetch Team Activity (Last 10 logs)
     const activityResult = await db.query(
         `SELECT bl.*, u.name as user_name
@@ -165,6 +180,7 @@ export default async function DashboardPage() {
                                     initialCoffeeCount={coffeeCount}
                                     initialFirstLog={firstLog}
                                     initialLastLog={lastLog}
+                                    todayLogs={todayLogs}
                                 />
                             </div>
                         </div>
@@ -301,9 +317,9 @@ function TeamLeaderboard({ leaderboard, teamTotal }: { leaderboard: any[], teamT
                         leaderboard.map((user, index) => (
                             <div key={user.name} className="flex items-center gap-4">
                                 <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center font-bold ${index === 0 ? 'bg-yellow-100 text-yellow-700' :
-                                        index === 1 ? 'bg-gray-100 text-gray-600' :
-                                            index === 2 ? 'bg-orange-100 text-orange-700' :
-                                                'text-gray-400'
+                                    index === 1 ? 'bg-gray-100 text-gray-600' :
+                                        index === 2 ? 'bg-orange-100 text-orange-700' :
+                                            'text-gray-400'
                                     }`}>
                                     {index + 1}
                                 </div>

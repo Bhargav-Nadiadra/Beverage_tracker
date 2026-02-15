@@ -69,3 +69,54 @@ export async function POST(request: NextRequest) {
         );
     }
 }
+
+export async function DELETE(request: NextRequest) {
+    try {
+        const session = await auth();
+        if (!session?.user) {
+            return new NextResponse('Unauthorized', { status: 401 });
+        }
+
+        const { searchParams } = new URL(request.url);
+        const logId = searchParams.get('id');
+
+        if (!logId) {
+            return new NextResponse('Log ID is required', { status: 400 });
+        }
+
+        const userId = session.user.id;
+
+        // Verify the log exists, belongs to the user, and was created today
+        const logResult = await db.query(
+            `SELECT id, logged_at FROM beverage_logs 
+             WHERE id = $1 AND user_id = $2`,
+            [logId, userId]
+        );
+
+        if (logResult.rows.length === 0) {
+            return new NextResponse('Log not found', { status: 404 });
+        }
+
+        const log = logResult.rows[0];
+        // Compare dates in local time or UTC? The dashboard uses CURRENT_DATE which is based on DB time.
+        // We'll compare with current date string.
+        const loggedDate = new Date(log.logged_at).toISOString().split('T')[0];
+        const today = new Date().toISOString().split('T')[0];
+
+        if (loggedDate !== today) {
+            return new NextResponse('Can only delete logs from today', { status: 403 });
+        }
+
+        // Delete the log
+        await db.query(
+            'DELETE FROM beverage_logs WHERE id = $1',
+            [logId]
+        );
+
+        return new NextResponse('Log deleted', { status: 200 });
+
+    } catch (error) {
+        console.error('Delete Log Error:', error);
+        return new NextResponse('Internal Server Error', { status: 500 });
+    }
+}

@@ -61,25 +61,28 @@
 
 ---
 
-### [⟳] US-8: Delete Logs - **IN PROGRESS**
-**Status:** Implementation Started  
-**Target Completion:** February 16, 2026
+### [✓] US-8: Delete Logs - **READY FOR REVIEW**
+**Status:** Implementation Complete  
+**Completed:** February 15, 2026
 
 #### Acceptance Criteria Validation:
 
-**[ ] User can delete logs from current day**
-- Implementation: Pending.
-- Verification: Pending.
+**[✓] User can delete logs from current day**
+- Implementation: `Today's History` section in `BeverageLogger.tsx`.
+- Verification: Tested deleting recent logs; database verified.
 
-**[ ] Visual confirmation before deletion**
-- Implementation: Pending.
-- Verification: Pending.
+**[✓] Visual confirmation before deletion**
+- Implementation: Browser `confirm()` dialog.
 
-**[ ] Count updates immediately**
-- Implementation: Pending.
-- Verification: Pending.
+**[✓] Count updates immediately**
+- Implementation: Local state management in `BeverageLogger` handles subtraction.
 
 ---
+
+## Phase 2: Enhanced Analytics & Settings (Coming Soon)
+- Daily Goals
+- Slack Integration
+- Advanced Heatmaps
 
 ## Technical Architecture Update (Migration to `pg`)
 - **Removed Prisma ORM** in favor of direct `pg` (node-postgres) usage.
