@@ -15,7 +15,7 @@ export default async function DashboardPage() {
 
     // Fetch user's organization
     const orgResult = await db.query(
-        `SELECT om.*, o.name as org_name, o.slug as org_slug
+        `SELECT om.*, o.name as org_name, o.slug as org_slug, o.id as org_id
      FROM organization_members om
      JOIN organizations o ON om.organization_id = o.id
      WHERE om.user_id = $1
@@ -28,6 +28,8 @@ export default async function DashboardPage() {
     if (!membership) {
         redirect('/create-organization');
     }
+
+    const orgId = membership.org_id;
 
     // Fetch today's beverage logs for the user
     const statsResult = await db.query(
@@ -55,7 +57,7 @@ export default async function DashboardPage() {
          WHERE bl.organization_id = $1
          ORDER BY bl.logged_at DESC
          LIMIT 10`,
-        [membership.organization_id]
+        [orgId]
     );
 
     // Fetch Team Leaderboard (Today)
@@ -68,7 +70,7 @@ export default async function DashboardPage() {
          GROUP BY u.name
          ORDER BY count DESC
          LIMIT 5`,
-        [membership.organization_id]
+        [orgId]
     );
 
     // Fetch Team Total (Today)
@@ -77,7 +79,7 @@ export default async function DashboardPage() {
          FROM beverage_logs
          WHERE organization_id = $1
          AND logged_at >= CURRENT_DATE`,
-        [membership.organization_id]
+        [orgId]
     );
 
     const teamTotal = parseInt(teamTotalResult.rows[0]?.total || '0', 10);
@@ -90,6 +92,27 @@ export default async function DashboardPage() {
         count: parseInt(row.count, 10)
     }));
 
+    // Fetch Personal Weekly Stats
+    const weeklyStatsResult = await db.query(
+        `SELECT 
+            DATE(logged_at) as date,
+            SUM(CASE WHEN beverage_type = 'TEA' THEN 1 ELSE 0 END) as tea,
+            SUM(CASE WHEN beverage_type = 'COFFEE' THEN 1 ELSE 0 END) as coffee
+         FROM beverage_logs
+         WHERE user_id = $1
+         AND logged_at >= CURRENT_DATE - INTERVAL '6 days'
+         GROUP BY DATE(logged_at)
+         ORDER BY date ASC`,
+        [userId]
+    );
+
+    const weeklyStats = weeklyStatsResult.rows.map(row => ({
+        ...row,
+        date: row.date.toISOString(),
+        tea: parseInt(row.tea),
+        coffee: parseInt(row.coffee)
+    }));
+
     const orgName = membership.org_name;
     const role = membership.role;
 
@@ -98,9 +121,19 @@ export default async function DashboardPage() {
             <nav className="bg-white shadow-sm border-b border-gray-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16">
-                        <div className="flex">
-                            <div className="flex-shrink-0 flex items-center">
+                        <div className="flex text-nowrap items-center">
+                            <div className="flex-shrink-0 flex items-center mr-8">
                                 <span className="text-xl font-bold text-green-600">Beverage Tracker</span>
+                            </div>
+                            <div className="hidden sm:flex sm:space-x-8 h-full">
+                                <a href="/dashboard" className="border-green-500 text-gray-900 inline-flex items-center px-1 pt-4 border-b-2 text-sm font-medium">
+                                    Dashboard
+                                </a>
+                                {role === 'ADMIN' && (
+                                    <a href="/dashboard/reports" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-4 border-b-2 text-sm font-medium">
+                                        Reports
+                                    </a>
+                                )}
                             </div>
                         </div>
                         <div className="flex items-center">
@@ -136,6 +169,9 @@ export default async function DashboardPage() {
                             </div>
                         </div>
 
+                        {/* Personal Trends */}
+                        <PersonalTrends weeklyStats={weeklyStats} />
+
                         {/* Recent Team Activity */}
                         <TeamActivity activity={activity} />
                     </div>
@@ -146,7 +182,7 @@ export default async function DashboardPage() {
 
                         {/* Admin Tools */}
                         {role === 'ADMIN' && (
-                            <InviteMemberForm organizationId={membership.organization_id} />
+                            <InviteMemberForm organizationId={orgId} />
                         )}
                     </div>
                 </div>
@@ -156,6 +192,63 @@ export default async function DashboardPage() {
 }
 
 // Helper components for the dashboard
+function PersonalTrends({ weeklyStats }: { weeklyStats: any[] }) {
+    const maxVal = Math.max(...weeklyStats.map(s => s.tea + s.coffee), 1);
+
+    return (
+        <div className="bg-white shadow rounded-lg overflow-hidden border border-gray-100">
+            <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+                <h3 className="text-lg leading-6 font-semibold text-gray-900">Weekly Trends</h3>
+                <p className="text-xs text-gray-500 mt-1">Your consumption over the last 7 days</p>
+            </div>
+            <div className="px-4 py-8 sm:p-6">
+                {weeklyStats.length === 0 ? (
+                    <div className="text-center py-6 text-gray-500 italic text-sm">No data for the past week.</div>
+                ) : (
+                    <div className="grid grid-cols-7 gap-2 items-end h-40">
+                        {weeklyStats.map((day) => (
+                            <div key={day.date} className="flex flex-col items-center group relative h-full justify-end">
+                                <div className="flex flex-col w-full px-1 space-y-0.5">
+                                    <div
+                                        className="bg-green-500 w-full rounded-t-sm transition-all duration-300 hover:brightness-110"
+                                        style={{ height: `${(day.tea / maxVal) * 100}%` }}
+                                        title={`${day.tea} Tea`}
+                                    ></div>
+                                    <div
+                                        className="bg-amber-700 w-full rounded-b-sm transition-all duration-300 hover:brightness-110"
+                                        style={{ height: `${(day.coffee / maxVal) * 100}%` }}
+                                        title={`${day.coffee} Coffee`}
+                                    ></div>
+                                </div>
+                                <span className="text-[10px] text-gray-400 mt-2 font-medium">
+                                    {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' })}
+                                </span>
+
+                                <div className="absolute bottom-full mb-2 hidden group-hover:block z-10">
+                                    <div className="bg-gray-900 text-white text-xs rounded py-1 px-2 shadow-lg whitespace-nowrap">
+                                        🍵 {day.tea} | ☕ {day.coffee}
+                                    </div>
+                                    <div className="w-2 h-2 bg-gray-900 rotate-45 mx-auto -mt-1"></div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+                <div className="mt-6 flex justify-center gap-4 text-xs font-medium border-t border-gray-50 pt-4">
+                    <div className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 bg-green-500 rounded-sm"></div>
+                        <span className="text-gray-600">Tea</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 bg-amber-700 rounded-sm"></div>
+                        <span className="text-gray-600">Coffee</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 function TeamActivity({ activity }: { activity: any[] }) {
     return (
         <div className="bg-white shadow rounded-lg overflow-hidden border border-gray-100">
