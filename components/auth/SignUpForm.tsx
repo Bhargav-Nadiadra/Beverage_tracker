@@ -1,13 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { signUpSchema, type SignUpInput } from '@/lib/validations';
 
 export default function SignUpForm() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const inviteToken = searchParams.get('invite');
+    const emailParam = searchParams.get('email');
+
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
@@ -18,6 +22,9 @@ export default function SignUpForm() {
         formState: { errors },
     } = useForm<SignUpInput>({
         resolver: zodResolver(signUpSchema),
+        defaultValues: {
+            email: emailParam || '',
+        }
     });
 
     const onSubmit = async (data: SignUpInput) => {
@@ -42,7 +49,10 @@ export default function SignUpForm() {
             setSuccess(true);
             // Redirect to login page after 3 seconds
             setTimeout(() => {
-                router.push('/login?verified=pending');
+                const redirectUrl = inviteToken
+                    ? `/login?verified=pending&invite=${inviteToken}`
+                    : '/login?verified=pending';
+                router.push(redirectUrl);
             }, 3000);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred');
@@ -165,7 +175,7 @@ export default function SignUpForm() {
                 {/* Login Link */}
                 <p className="text-center text-sm text-gray-600">
                     Already have an account?{' '}
-                    <a href="/login" className="text-green-600 hover:text-green-700 font-medium">
+                    <a href={`/login${inviteToken ? `?invite=${inviteToken}` : ''}`} className="text-green-600 hover:text-green-700 font-medium">
                         Log in
                     </a>
                 </p>

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, type LoginInput } from '@/lib/validations';
@@ -9,16 +9,31 @@ import { signIn } from 'next-auth/react';
 
 export default function LoginForm() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const inviteToken = searchParams.get('invite');
+    const emailParam = searchParams.get('email');
+    const verifiedParam = searchParams.get('verified');
+
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const {
         register,
         handleSubmit,
+        setValue,
         formState: { errors },
     } = useForm<LoginInput>({
         resolver: zodResolver(loginSchema),
+        defaultValues: {
+            email: emailParam || '',
+        }
     });
+
+    useEffect(() => {
+        if (emailParam) {
+            setValue('email', emailParam);
+        }
+    }, [emailParam, setValue]);
 
     const onSubmit = async (data: LoginInput) => {
         setIsLoading(true);
@@ -41,8 +56,9 @@ export default function LoginForm() {
                 }
             } else {
                 // Successful login
-                router.push('/dashboard');
-                router.refresh(); // Ensure the layout updates with the new session
+                const redirectUrl = inviteToken ? `/invite/${inviteToken}` : '/dashboard';
+                router.push(redirectUrl);
+                router.refresh();
             }
         } catch (err) {
             setError('An unexpected error occurred.');
@@ -53,6 +69,14 @@ export default function LoginForm() {
 
     return (
         <div className="w-full max-w-md mx-auto p-8 bg-white rounded-lg shadow-lg">
+            {verifiedParam === 'pending' && (
+                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-700">
+                        Registration successful! Please check your email to verify your account before logging in.
+                    </p>
+                </div>
+            )}
+
             <div className="text-center mb-8">
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back</h1>
                 <p className="text-gray-600">Log in to track your beverages</p>
@@ -132,7 +156,7 @@ export default function LoginForm() {
                 {/* Sign Up Link */}
                 <p className="text-center text-sm text-gray-600">
                     Don't have an account?{' '}
-                    <a href="/signup" className="text-green-600 hover:text-green-700 font-medium">
+                    <a href={`/signup${inviteToken ? `?invite=${inviteToken}&email=${encodeURIComponent(emailParam || '')}` : ''}`} className="text-green-600 hover:text-green-700 font-medium">
                         Sign up
                     </a>
                 </p>

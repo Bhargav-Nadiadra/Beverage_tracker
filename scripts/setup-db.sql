@@ -59,3 +59,19 @@ CREATE TABLE IF NOT EXISTS beverage_logs (
 CREATE INDEX IF NOT EXISTS idx_logs_user_date ON beverage_logs(user_id, logged_at);
 CREATE INDEX IF NOT EXISTS idx_logs_org_date ON beverage_logs(organization_id, logged_at);
 
+
+
+-- Invitations Table
+CREATE TABLE IF NOT EXISTS invitations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  email VARCHAR(255) NOT NULL,
+  invited_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token VARCHAR(255) UNIQUE NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  accepted_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_invitations_token ON invitations(token);
+

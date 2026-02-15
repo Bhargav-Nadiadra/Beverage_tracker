@@ -28,3 +28,15 @@ export function isTokenExpired(expiryDate: Date | null): boolean {
     if (!expiryDate) return true;
     return new Date() > expiryDate;
 }
+
+/**
+ * Get expiry date for invitation token (7 days from now)
+ * @returns Date object representing token expiry
+ */
+export function getInvitationTokenExpiry(): Date {
+    const expiry = new Date();
+    expiry.setDate(expiry.getDate() + 7);
+    return expiry;
+}
+
+export const generateInvitationToken = generateVerificationToken;

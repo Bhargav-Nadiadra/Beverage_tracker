@@ -2,6 +2,7 @@ import { auth } from '@/auth';
 import { db } from '@/lib/db';
 import { redirect } from 'next/navigation';
 import BeverageLogger from '@/components/dashboard/BeverageLogger';
+import InviteMemberForm from '@/components/organizations/InviteMemberForm';
 
 export default async function DashboardPage() {
     const session = await auth();
@@ -11,8 +12,6 @@ export default async function DashboardPage() {
     }
 
     const userId = session.user.id;
-
-
 
     // Fetch user's organization
     const orgResult = await db.query(
@@ -26,7 +25,11 @@ export default async function DashboardPage() {
 
     const membership = orgResult.rows[0];
 
-    // ... existing no-membership check
+    // If no membership, we might want to redirect them to join/create an org
+    // but for now we'll just handle it gracefully
+    if (!membership) {
+        redirect('/create-organization');
+    }
 
     // Fetch today's beverage logs for the user
     const statsResult = await db.query(
@@ -46,7 +49,6 @@ export default async function DashboardPage() {
     const firstLog = statsResult.rows[0]?.first_log ? new Date(statsResult.rows[0].first_log).toISOString() : null;
     const lastLog = statsResult.rows[0]?.last_log ? new Date(statsResult.rows[0].last_log).toISOString() : null;
 
-    // With raw SQL join, we access properties directly from the flat row
     const orgName = membership.org_name;
     const role = membership.role;
 
@@ -72,7 +74,7 @@ export default async function DashboardPage() {
                 </div>
             </nav>
 
-            <main className="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
+            <main className="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8 space-y-8">
                 <div className="bg-white overflow-hidden shadow rounded-lg divide-y divide-gray-200">
                     <div className="px-4 py-5 sm:px-6">
                         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
@@ -89,6 +91,23 @@ export default async function DashboardPage() {
                         />
                     </div>
                 </div>
+
+                {role === 'ADMIN' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <InviteMemberForm organizationId={membership.organization_id} />
+                        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-center items-center text-center">
+                            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                </svg>
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-1">Team Insights</h3>
+                            <p className="text-sm text-gray-500">
+                                Detailed team analytics will be available in User Story 6.
+                            </p>
+                        </div>
+                    </div>
+                )}
             </main>
         </div>
     );
