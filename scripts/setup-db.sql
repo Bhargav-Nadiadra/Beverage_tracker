@@ -44,3 +44,18 @@ CREATE TABLE IF NOT EXISTS organization_members (
 
 CREATE INDEX IF NOT EXISTS idx_org_members_user_id ON organization_members(user_id);
 CREATE INDEX IF NOT EXISTS idx_org_members_org_id ON organization_members(organization_id);
+
+
+-- Beverage Logs Table
+CREATE TABLE IF NOT EXISTS beverage_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  beverage_type VARCHAR(20) NOT NULL CHECK (beverage_type IN ('TEA', 'COFFEE')),
+  logged_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_logs_user_date ON beverage_logs(user_id, logged_at);
+CREATE INDEX IF NOT EXISTS idx_logs_org_date ON beverage_logs(organization_id, logged_at);
+

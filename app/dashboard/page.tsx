@@ -1,6 +1,7 @@
 import { auth } from '@/auth';
 import { db } from '@/lib/db';
 import { redirect } from 'next/navigation';
+import BeverageLogger from '@/components/dashboard/BeverageLogger';
 
 export default async function DashboardPage() {
     const session = await auth();
@@ -11,8 +12,10 @@ export default async function DashboardPage() {
 
     const userId = session.user.id;
 
+
+
     // Fetch user's organization
-    const result = await db.query(
+    const orgResult = await db.query(
         `SELECT om.*, o.name as org_name, o.slug as org_slug
      FROM organization_members om
      JOIN organizations o ON om.organization_id = o.id
@@ -21,26 +24,23 @@ export default async function DashboardPage() {
         [userId]
     );
 
-    const membership = result.rows[0];
+    const membership = orgResult.rows[0];
 
-    if (!membership) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-                <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full text-center">
-                    <h1 className="text-2xl font-bold text-gray-900 mb-4">Welcome to Beverage Tracker!</h1>
-                    <p className="text-gray-600 mb-6">
-                        You are not part of any organization yet. To get started, you can create a new organization for your team.
-                    </p>
-                    <a
-                        href="/create-organization"
-                        className="inline-block bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200"
-                    >
-                        Create Organization
-                    </a>
-                </div>
-            </div>
-        );
-    }
+    // ... existing no-membership check
+
+    // Fetch today's beverage logs for the user
+    const statsResult = await db.query(
+        `SELECT 
+            SUM(CASE WHEN beverage_type = 'TEA' THEN 1 ELSE 0 END) as tea_count,
+            SUM(CASE WHEN beverage_type = 'COFFEE' THEN 1 ELSE 0 END) as coffee_count
+         FROM beverage_logs
+         WHERE user_id = $1 
+         AND logged_at >= CURRENT_DATE`,
+        [userId]
+    );
+
+    const teaCount = parseInt(statsResult.rows[0]?.tea_count || '0', 10);
+    const coffeeCount = parseInt(statsResult.rows[0]?.coffee_count || '0', 10);
 
     // With raw SQL join, we access properties directly from the flat row
     const orgName = membership.org_name;
@@ -77,18 +77,7 @@ export default async function DashboardPage() {
                         </p>
                     </div>
                     <div className="px-4 py-5 sm:p-6">
-                        {/* Placeholder for US-3: Tea Logging */}
-                        <div className="text-center py-10 border-2 border-dashed border-gray-300 rounded-lg">
-                            <p className="text-gray-500 mb-4">Beverage logging will be implemented in the next story.</p>
-                            <div className="flex justify-center gap-4">
-                                <button disabled className="bg-gray-200 text-gray-400 px-6 py-3 rounded-lg font-medium cursor-not-allowed">
-                                    ☕ Log Coffee
-                                </button>
-                                <button disabled className="bg-gray-200 text-gray-400 px-6 py-3 rounded-lg font-medium cursor-not-allowed">
-                                    🍵 Log Tea
-                                </button>
-                            </div>
-                        </div>
+                        <BeverageLogger initialTeaCount={teaCount} initialCoffeeCount={coffeeCount} />
                     </div>
                 </div>
             </main>
