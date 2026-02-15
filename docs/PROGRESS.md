@@ -26,25 +26,27 @@
 
 ---
 
-### [✓] US-5: Member Invitation - **READY FOR REVIEW**
+### [✓] US-5: Member Invitation - **APPROVED**
+**Status:** Approved by User  
+**Completed:** February 15, 2026
+
+---
+
+### [✓] US-6: Team Dashboard - **READY FOR REVIEW**
 **Status:** Implementation Complete  
 **Completed:** February 15, 2026
 
 #### Acceptance Criteria Validation:
 
-**[✓] Admin can invite team members via email**
-- Implementation: `InviteMemberForm.tsx` & `/api/organizations/invite`.
-- Verification: Tested with mock Resend.
+**[✓] Users can see recent team activity feed**
+- Implementation: `TeamActivity` component in `dashboard/page.tsx`.
+- Verification: Tested with organizational logs.
 
-**[✓] Invitation link expires after 7 days**
-- Implementation: `getInvitationTokenExpiry()` and DB check.
+**[✓] Display daily team consumption total**
+- Implementation: Aggregate query in `DashboardPage`.
 
-**[✓] Invitee can register and auto-join organization**
-- Implementation: Invitation landing page handles signup/login redirect.
-- Verification: Accept API joins user and organization.
-
-**[✓] Admin sees confirmation of sent invitation**
-- Implementation: Success message in `InviteMemberForm.tsx`.
+**[✓] Team leaderboard showing top drinkers**
+- Implementation: `TeamLeaderboard` component with daily grouping.
 
 ---
 
@@ -89,6 +91,6 @@
 
 ## ✅ Story US-5 Implementation Complete
 
-**Status:** Ready for Review
+**Status:** Approved
 
 **Type "APPROVED" to proceed to US-6: Team Dashboard.**

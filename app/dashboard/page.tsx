@@ -25,8 +25,6 @@ export default async function DashboardPage() {
 
     const membership = orgResult.rows[0];
 
-    // If no membership, we might want to redirect them to join/create an org
-    // but for now we'll just handle it gracefully
     if (!membership) {
         redirect('/create-organization');
     }
@@ -48,6 +46,49 @@ export default async function DashboardPage() {
     const coffeeCount = parseInt(statsResult.rows[0]?.coffee_count || '0', 10);
     const firstLog = statsResult.rows[0]?.first_log ? new Date(statsResult.rows[0].first_log).toISOString() : null;
     const lastLog = statsResult.rows[0]?.last_log ? new Date(statsResult.rows[0].last_log).toISOString() : null;
+
+    // Fetch Team Activity (Last 10 logs)
+    const activityResult = await db.query(
+        `SELECT bl.*, u.name as user_name
+         FROM beverage_logs bl
+         JOIN users u ON bl.user_id = u.id
+         WHERE bl.organization_id = $1
+         ORDER BY bl.logged_at DESC
+         LIMIT 10`,
+        [membership.organization_id]
+    );
+
+    // Fetch Team Leaderboard (Today)
+    const leaderboardResult = await db.query(
+        `SELECT u.name, COUNT(*) as count
+         FROM beverage_logs bl
+         JOIN users u ON bl.user_id = u.id
+         WHERE bl.organization_id = $1
+         AND bl.logged_at >= CURRENT_DATE
+         GROUP BY u.name
+         ORDER BY count DESC
+         LIMIT 5`,
+        [membership.organization_id]
+    );
+
+    // Fetch Team Total (Today)
+    const teamTotalResult = await db.query(
+        `SELECT COUNT(*) as total
+         FROM beverage_logs
+         WHERE organization_id = $1
+         AND logged_at >= CURRENT_DATE`,
+        [membership.organization_id]
+    );
+
+    const teamTotal = parseInt(teamTotalResult.rows[0]?.total || '0', 10);
+    const activity = activityResult.rows.map(row => ({
+        ...row,
+        logged_at: row.logged_at.toISOString()
+    }));
+    const leaderboard = leaderboardResult.rows.map(row => ({
+        name: row.name,
+        count: parseInt(row.count, 10)
+    }));
 
     const orgName = membership.org_name;
     const role = membership.role;
@@ -75,40 +116,121 @@ export default async function DashboardPage() {
             </nav>
 
             <main className="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8 space-y-8">
-                <div className="bg-white overflow-hidden shadow rounded-lg divide-y divide-gray-200">
-                    <div className="px-4 py-5 sm:px-6">
-                        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-                        <p className="mt-1 text-sm text-gray-500">
-                            Welcome back, {session.user.name}. Here's your daily summary.
-                        </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="md:col-span-2 space-y-8">
+                        {/* Personal Logger */}
+                        <div className="bg-white overflow-hidden shadow rounded-lg divide-y divide-gray-200">
+                            <div className="px-4 py-5 sm:px-6">
+                                <h1 className="text-2xl font-bold text-gray-900">My Dashboard</h1>
+                                <p className="mt-1 text-sm text-gray-500">
+                                    Welcome back, {session.user.name}. Here's your daily summary.
+                                </p>
+                            </div>
+                            <div className="px-4 py-5 sm:p-6">
+                                <BeverageLogger
+                                    initialTeaCount={teaCount}
+                                    initialCoffeeCount={coffeeCount}
+                                    initialFirstLog={firstLog}
+                                    initialLastLog={lastLog}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Recent Team Activity */}
+                        <TeamActivity activity={activity} />
                     </div>
-                    <div className="px-4 py-5 sm:p-6">
-                        <BeverageLogger
-                            initialTeaCount={teaCount}
-                            initialCoffeeCount={coffeeCount}
-                            initialFirstLog={firstLog}
-                            initialLastLog={lastLog}
-                        />
+
+                    <div className="space-y-8">
+                        {/* Team Leaderboard */}
+                        <TeamLeaderboard leaderboard={leaderboard} teamTotal={teamTotal} />
+
+                        {/* Admin Tools */}
+                        {role === 'ADMIN' && (
+                            <InviteMemberForm organizationId={membership.organization_id} />
+                        )}
                     </div>
                 </div>
-
-                {role === 'ADMIN' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <InviteMemberForm organizationId={membership.organization_id} />
-                        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-center items-center text-center">
-                            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mb-4">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                                </svg>
-                            </div>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-1">Team Insights</h3>
-                            <p className="text-sm text-gray-500">
-                                Detailed team analytics will be available in User Story 6.
-                            </p>
-                        </div>
-                    </div>
-                )}
             </main>
+        </div>
+    );
+}
+
+// Helper components for the dashboard
+function TeamActivity({ activity }: { activity: any[] }) {
+    return (
+        <div className="bg-white shadow rounded-lg overflow-hidden border border-gray-100">
+            <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+                <h3 className="text-lg leading-6 font-semibold text-gray-900">Recent Team Activity</h3>
+            </div>
+            <div className="flow-root">
+                <ul role="list" className="divide-y divide-gray-200">
+                    {activity.length === 0 ? (
+                        <li className="px-4 py-8 text-center text-gray-500 italic text-sm">No activity yet. Be the first!</li>
+                    ) : (
+                        activity.map((log) => (
+                            <li key={log.id} className="px-4 py-4 hover:bg-gray-50 transition duration-150">
+                                <div className="flex items-center space-x-4">
+                                    <div className="flex-shrink-0">
+                                        <div className="h-10 w-10 rounded-xl bg-gray-50 flex items-center justify-center text-xl shadow-sm border border-gray-100">
+                                            {log.beverage_type === 'TEA' ? '🍵' : '☕'}
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-semibold text-gray-900 truncate">
+                                            {log.user_name}
+                                        </p>
+                                        <p className="text-xs text-gray-500 flex items-center gap-1">
+                                            Logged a {log.beverage_type.toLowerCase()} • {new Date(log.logged_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </p>
+                                    </div>
+                                </div>
+                            </li>
+                        ))
+                    )}
+                </ul>
+            </div>
+        </div>
+    );
+}
+
+function TeamLeaderboard({ leaderboard, teamTotal }: { leaderboard: any[], teamTotal: number }) {
+    return (
+        <div className="bg-white shadow rounded-lg overflow-hidden border border-gray-100">
+            <div className="px-4 py-5 sm:px-6 border-b border-gray-200 bg-gradient-to-r from-green-50 to-emerald-50">
+                <h3 className="text-lg leading-6 font-semibold text-green-900">Today's Standings</h3>
+                <p className="mt-1 text-sm text-green-700 font-medium">✨ {teamTotal} cups shared by the team!</p>
+            </div>
+            <div className="px-4 py-5 sm:p-6">
+                <div className="space-y-5">
+                    {leaderboard.length === 0 ? (
+                        <p className="text-center text-gray-500 italic text-sm py-4">The leaderboard is empty today.</p>
+                    ) : (
+                        leaderboard.map((user, index) => (
+                            <div key={user.name} className="flex items-center gap-4">
+                                <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center font-bold ${index === 0 ? 'bg-yellow-100 text-yellow-700' :
+                                        index === 1 ? 'bg-gray-100 text-gray-600' :
+                                            index === 2 ? 'bg-orange-100 text-orange-700' :
+                                                'text-gray-400'
+                                    }`}>
+                                    {index + 1}
+                                </div>
+                                <div className="flex-grow">
+                                    <div className="flex justify-between items-center mb-1.5">
+                                        <span className="text-sm font-semibold text-gray-900">{user.name}</span>
+                                        <span className="text-xs font-bold px-2 py-0.5 bg-green-100 text-green-700 rounded-full">{user.count}</span>
+                                    </div>
+                                    <div className="w-full bg-gray-100 rounded-full h-2 shadow-inner">
+                                        <div
+                                            className="bg-green-500 h-2 rounded-full transition-all duration-500 shadow-sm"
+                                            style={{ width: `${Math.min(100, (user.count / (leaderboard[0]?.count || 1)) * 100)}%` }}
+                                        ></div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
         </div>
     );
 }
