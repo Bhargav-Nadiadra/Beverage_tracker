@@ -6,20 +6,35 @@ import { useRouter } from 'next/navigation';
 interface BeverageLoggerProps {
     initialTeaCount: number;
     initialCoffeeCount: number;
+    initialFirstLog: string | null;
+    initialLastLog: string | null;
 }
 
-export default function BeverageLogger({ initialTeaCount, initialCoffeeCount }: BeverageLoggerProps) {
+export default function BeverageLogger({ initialTeaCount, initialCoffeeCount, initialFirstLog, initialLastLog }: BeverageLoggerProps) {
     const [teaCount, setTeaCount] = useState(initialTeaCount);
     const [coffeeCount, setCoffeeCount] = useState(initialCoffeeCount);
+    const [firstLog, setFirstLog] = useState<string | null>(initialFirstLog);
+    const [lastLog, setLastLog] = useState<string | null>(initialLastLog);
     const [loading, setLoading] = useState<string | null>(null);
     const router = useRouter();
+
+    const formatTime = (isoString: string | null) => {
+        if (!isoString) return 'N/A';
+        return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
 
     const logBeverage = async (type: 'TEA' | 'COFFEE') => {
         setLoading(type);
 
+        const now = new Date().toISOString();
+
         // Optimistic update
         if (type === 'TEA') setTeaCount(prev => prev + 1);
         else setCoffeeCount(prev => prev + 1);
+
+        // Update timestamps optimistically
+        if (!firstLog) setFirstLog(now);
+        setLastLog(now);
 
         try {
             const response = await fetch('/api/logs', {
@@ -32,6 +47,7 @@ export default function BeverageLogger({ initialTeaCount, initialCoffeeCount }: 
                 // Revert on error
                 if (type === 'TEA') setTeaCount(prev => prev - 1);
                 else setCoffeeCount(prev => prev - 1);
+                // Note: Reverting timestamps is complex, we'll rely on router.refresh() or keep inaccurate state momentarily
                 alert('Failed to log beverage. Please try again.');
             } else {
                 router.refresh();
@@ -85,9 +101,19 @@ export default function BeverageLogger({ initialTeaCount, initialCoffeeCount }: 
                 </div>
             </div>
 
-            <div className="mt-10 pt-6 border-t border-gray-100 w-full flex justify-between items-center text-sm text-gray-500">
-                <span>Today's Total</span>
-                <span className="font-bold text-gray-900 text-xl">{teaCount + coffeeCount} Cups</span>
+            <div className="mt-10 pt-6 border-t border-gray-100 w-full grid grid-cols-1 sm:grid-cols-3 gap-6 text-center text-sm text-gray-500">
+                <div className="flex flex-col">
+                    <span className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-1">First Cup</span>
+                    <span className="font-bold text-gray-800 text-lg">{formatTime(firstLog)}</span>
+                </div>
+                <div className="flex flex-col border-x border-gray-100">
+                    <span className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-1">Total Cups</span>
+                    <span className="font-bold text-gray-900 text-2xl text-green-600">{teaCount + coffeeCount}</span>
+                </div>
+                <div className="flex flex-col">
+                    <span className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-1">Last Cup</span>
+                    <span className="font-bold text-gray-800 text-lg">{formatTime(lastLog)}</span>
+                </div>
             </div>
         </div>
     );

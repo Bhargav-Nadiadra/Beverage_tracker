@@ -32,7 +32,9 @@ export default async function DashboardPage() {
     const statsResult = await db.query(
         `SELECT 
             SUM(CASE WHEN beverage_type = 'TEA' THEN 1 ELSE 0 END) as tea_count,
-            SUM(CASE WHEN beverage_type = 'COFFEE' THEN 1 ELSE 0 END) as coffee_count
+            SUM(CASE WHEN beverage_type = 'COFFEE' THEN 1 ELSE 0 END) as coffee_count,
+            MIN(logged_at) as first_log,
+            MAX(logged_at) as last_log
          FROM beverage_logs
          WHERE user_id = $1 
          AND logged_at >= CURRENT_DATE`,
@@ -41,6 +43,8 @@ export default async function DashboardPage() {
 
     const teaCount = parseInt(statsResult.rows[0]?.tea_count || '0', 10);
     const coffeeCount = parseInt(statsResult.rows[0]?.coffee_count || '0', 10);
+    const firstLog = statsResult.rows[0]?.first_log ? new Date(statsResult.rows[0].first_log).toISOString() : null;
+    const lastLog = statsResult.rows[0]?.last_log ? new Date(statsResult.rows[0].last_log).toISOString() : null;
 
     // With raw SQL join, we access properties directly from the flat row
     const orgName = membership.org_name;
@@ -77,7 +81,12 @@ export default async function DashboardPage() {
                         </p>
                     </div>
                     <div className="px-4 py-5 sm:p-6">
-                        <BeverageLogger initialTeaCount={teaCount} initialCoffeeCount={coffeeCount} />
+                        <BeverageLogger
+                            initialTeaCount={teaCount}
+                            initialCoffeeCount={coffeeCount}
+                            initialFirstLog={firstLog}
+                            initialLastLog={lastLog}
+                        />
                     </div>
                 </div>
             </main>

@@ -14,29 +14,34 @@
 
 ---
 
-### [✓] US-3: Tea Logging - **READY FOR REVIEW**
+### [✓] US-3: Tea Logging - **APPROVED**
+**Status:** Approved by User  
+**Completed:** February 15, 2026
+
+---
+
+### [✓] US-4: Daily Summary - **READY FOR REVIEW**
 **Status:** Implementation Complete  
 **Completed:** February 15, 2026
 
 #### Acceptance Criteria Validation:
 
-**[✓] Single click/tap logs beverage**
-- Implementation: Large Tea/Coffee buttons in `BeverageLogger.tsx`.
-- Verification: Tested manually (mocked).
-- Location: `components/dashboard/BeverageLogger.tsx`
+**[✓] Separate counts for tea and coffee**
+- Implementation: Implemented in US-3 (BeverageLogger).
+- Verification: Dashboard displays counts.
 
-**[✓] Visual feedback is immediate (< 500ms)**
-- Implementation: Optimistic state update in React component.
-- Verification: Code inspection (setState before fetch).
-- Location: `components/dashboard/BeverageLogger.tsx`
+**[✓] Combined total is displayed**
+- Implementation: Implemented in US-3.
+- Verification: Dashboard displays total.
 
-**[✓] Count is updated in real-time**
-- Implementation: Optimistic update + `router.refresh()` to sync with server.
-- Verification: UI updates instantly.
+**[✓] Updates in real-time when logging**
+- Implementation: Implemented in US-3.
+- Verification: Optimistic UI updates.
 
-**[✓] Timestamp is recorded accurately**
-- Implementation: Database `default: now()` timestamp.
-- Verification: API route `app/api/logs/route.ts`.
+**[✓] Shows time of first/last beverage**
+- Implementation: DB fetch MIN/MAX logged_at.
+- Verification: Dashboard displays times.
+- Location: `app/dashboard/page.tsx`, `components/dashboard/BeverageLogger.tsx`
 
 ---
 
@@ -46,39 +51,32 @@
 - **DB Client:** `lib/db.ts` using `pg.Pool`.
 - **Reason:** User request for "simple postgres".
 
-## Manual Testing Steps (US-3):
+## Manual Testing Steps (US-4):
 
-### Test Case 1: Log Tea
-1. Navigate to `/dashboard`.
-2. Click "TEA" button.
+### Test Case 1: First Log
+1. Start with 0 logs.
+2. Log a beverage.
 3. **Expected:** 
-   - Count increments immediately.
-   - Total count updates.
-4. **Verification:** Check database `beverage_logs` table.
+   - "First Cup" time updates.
+   - "Last Cup" time updates.
+   - Both match current time.
 
-### Test Case 2: Log Coffee
-1. Navigate to `/dashboard`.
-2. Click "COFFEE" button.
-3. **Expected:** Same as Tea.
+### Test Case 2: Subsequent Logs
+1. Log another beverage.
+2. **Expected:**
+   - "First Cup" remains unchanged.
+   - "Last Cup" updates to new time.
 
-### Test Case 3: Refresh
-1. Log some drinks.
-2. Refresh page.
-3. **Expected:** Counts persist (fetched from DB).
+### Test Case 3: Persistence
+1. Refresh page.
+2. **Expected:** Times persist from database.
 
-## Files Created/Modified (US-3):
-- ✅ `scripts/setup-db.sql` - Added `beverage_logs` table
-- ✅ `app/api/logs/route.ts` - Logging API
-- ✅ `components/dashboard/BeverageLogger.tsx` - Client component
-- ✅ `app/dashboard/page.tsx` - Integrated logger
+## Files Created/Modified (US-4):
+- ✅ `app/dashboard/page.tsx` - Added fetch for first/last log.
+- ✅ `components/dashboard/BeverageLogger.tsx` - Display timestamps.
 
-## ✅ Story US-3 Implementation Complete
+## ✅ Story US-4 Implementation Complete
 
 **Status:** Ready for Review
 
-**Please verify functionality by:**
-1. Logging in.
-2. Visiting Dashboard.
-3. Clicking Tea/Coffee buttons.
-
-**Type "APPROVED" to proceed to US-4: Daily Summary.**
+**Type "APPROVED" to proceed to US-5: Member Invitation.**
