@@ -140,6 +140,9 @@ export default async function DashboardPage() {
     const streakDates = streakDatesResult.rows.map(row => new Date(row.log_date));
     const streakStats = calculateStreaks(streakDates);
 
+    const userResult = await db.query('SELECT daily_goal FROM users WHERE id = $1', [userId]);
+    const dailyGoal = userResult.rows[0]?.daily_goal || null;
+
     const orgName = membership.org_name;
     const role = membership.role;
 
@@ -161,6 +164,9 @@ export default async function DashboardPage() {
                                         Reports
                                     </a>
                                 )}
+                                <a href="/dashboard/settings" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-4 border-b-2 text-sm font-medium">
+                                    Settings
+                                </a>
                             </div>
                         </div>
                         <div className="flex items-center">
@@ -193,6 +199,7 @@ export default async function DashboardPage() {
                                     initialFirstLog={firstLog}
                                     initialLastLog={lastLog}
                                     todayLogs={todayLogs}
+                                    dailyGoal={dailyGoal}
                                 />
                             </div>
                         </div>

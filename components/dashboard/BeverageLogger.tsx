@@ -15,6 +15,7 @@ interface BeverageLoggerProps {
     initialFirstLog: string | null;
     initialLastLog: string | null;
     todayLogs: Log[];
+    dailyGoal: number | null;
 }
 
 export default function BeverageLogger({
@@ -22,7 +23,8 @@ export default function BeverageLogger({
     initialCoffeeCount,
     initialFirstLog,
     initialLastLog,
-    todayLogs: serverLogs
+    todayLogs: serverLogs,
+    dailyGoal
 }: BeverageLoggerProps) {
     const [teaCount, setTeaCount] = useState(initialTeaCount);
     const [coffeeCount, setCoffeeCount] = useState(initialCoffeeCount);
@@ -155,6 +157,31 @@ export default function BeverageLogger({
                         </div>
                     </div>
                 </div>
+
+                {dailyGoal && (
+                    <div className="w-full mt-8 px-4">
+                        <div className="flex justify-between items-end mb-2">
+                            <span className="text-sm font-bold text-gray-700">Daily Goal Progress</span>
+                            <span className={`text-xs font-bold ${(teaCount + coffeeCount) > dailyGoal ? 'text-red-600' : 'text-gray-500'}`}>
+                                {teaCount + coffeeCount} / {dailyGoal}
+                            </span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-3 shadow-inner overflow-hidden">
+                            <div
+                                className={`h-full rounded-full transition-all duration-500 shadow-sm ${(teaCount + coffeeCount) > dailyGoal ? 'bg-red-500' : 'bg-green-500'}`}
+                                style={{ width: `${Math.min(100, ((teaCount + coffeeCount) / dailyGoal) * 100)}%` }}
+                            ></div>
+                        </div>
+                        {(teaCount + coffeeCount) > dailyGoal && (
+                            <p className="mt-2 text-xs text-red-600 font-bold flex items-center gap-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                You've exceeded your daily limit!
+                            </p>
+                        )}
+                    </div>
+                )}
 
                 <div className="mt-10 pt-6 border-t border-gray-50 w-full grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
                     <div className="flex flex-col">

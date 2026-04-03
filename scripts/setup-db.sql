@@ -73,5 +73,9 @@ CREATE TABLE IF NOT EXISTS invitations (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+
 CREATE INDEX IF NOT EXISTS idx_invitations_token ON invitations(token);
+
+-- Migrations
+ALTER TABLE users ADD COLUMN IF NOT EXISTS daily_goal INTEGER;
 
