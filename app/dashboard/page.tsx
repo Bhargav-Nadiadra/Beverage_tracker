@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { redirect } from 'next/navigation';
 import BeverageLogger from '@/components/dashboard/BeverageLogger';
 import InviteMemberForm from '@/components/organizations/InviteMemberForm';
+import { calculateStreaks } from '@/lib/streaks';
 
 export default async function DashboardPage() {
     const session = await auth();
@@ -128,6 +129,17 @@ export default async function DashboardPage() {
         coffee: parseInt(row.coffee)
     }));
 
+    // Fetch dates for streak calculation
+    const streakDatesResult = await db.query(
+        `SELECT DISTINCT DATE(logged_at AT TIME ZONE 'UTC') as log_date
+         FROM beverage_logs 
+         WHERE user_id = $1 
+         ORDER BY log_date DESC`,
+        [userId]
+    );
+    const streakDates = streakDatesResult.rows.map(row => new Date(row.log_date));
+    const streakStats = calculateStreaks(streakDates);
+
     const orgName = membership.org_name;
     const role = membership.role;
 
@@ -185,8 +197,13 @@ export default async function DashboardPage() {
                             </div>
                         </div>
 
-                        {/* Personal Trends */}
-                        <PersonalTrends weeklyStats={weeklyStats} />
+                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                            {/* User Streak */}
+                            <UserStreakCard streakStats={streakStats} />
+
+                            {/* Personal Trends */}
+                            <PersonalTrends weeklyStats={weeklyStats} />
+                        </div>
 
                         {/* Recent Team Activity */}
                         <TeamActivity activity={activity} />
@@ -338,6 +355,29 @@ function TeamLeaderboard({ leaderboard, teamTotal }: { leaderboard: any[], teamT
                             </div>
                         ))
                     )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function UserStreakCard({ streakStats }: { streakStats: { current: number, longest: number } }) {
+    return (
+        <div className="bg-white shadow rounded-lg overflow-hidden border border-gray-100 h-full flex flex-col">
+            <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+                <h3 className="text-lg leading-6 font-semibold text-gray-900">Your Streak</h3>
+                <p className="text-xs text-gray-500 mt-1">Keep it up! Log every day to maintain your streak.</p>
+            </div>
+            <div className="px-4 py-8 sm:p-6 flex-grow flex items-center justify-center">
+                <div className="w-full flex items-center">
+                    <div className="flex-1 text-center border-r border-gray-100">
+                        <div className="text-5xl font-black text-orange-500 mb-2 drop-shadow-sm">🔥 {streakStats.current}</div>
+                        <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">Day Streak</div>
+                    </div>
+                    <div className="flex-1 text-center">
+                        <div className="text-4xl font-black text-gray-700 mb-2">🏆 {streakStats.longest}</div>
+                        <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">Best Streak</div>
+                    </div>
                 </div>
             </div>
         </div>
