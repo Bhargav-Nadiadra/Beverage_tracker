@@ -95,13 +95,21 @@ export default async function AdminReportsPage() {
                         <h1 className="text-3xl font-bold text-gray-900">Organization Reports</h1>
                         <p className="mt-1 text-sm text-gray-500">Insights for {membership.org_name}</p>
                     </div>
-                    <form action="/api/organizations/export" method="GET">
+                    <form action="/api/organizations/export" method="GET" className="flex flex-col sm:flex-row items-end gap-3">
                         <input type="hidden" name="orgId" value={orgId} />
-                        <button type="submit" className="inline-flex items-center px-4 py-2 border border-blue-600 rounded-lg text-blue-600 hover:bg-blue-50 transition font-semibold text-sm">
+                        <div className="flex flex-col">
+                            <label className="text-xs text-gray-500 mb-1 font-medium">Start Date</label>
+                            <input type="date" name="startDate" className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm h-[38px] w-full sm:w-36 text-gray-700 focus:ring-green-500 focus:border-green-500" />
+                        </div>
+                        <div className="flex flex-col">
+                            <label className="text-xs text-gray-500 mb-1 font-medium">End Date</label>
+                            <input type="date" name="endDate" className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm h-[38px] w-full sm:w-36 text-gray-700 focus:ring-green-500 focus:border-green-500" />
+                        </div>
+                        <button type="submit" className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-blue-600 rounded-lg text-blue-600 hover:bg-blue-50 transition font-semibold text-sm h-[38px]">
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
-                            Export to CSV
+                            Export
                         </button>
                     </form>
                 </div>

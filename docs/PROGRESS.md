@@ -79,9 +79,37 @@
 
 ---
 
-### [🔄] US-9: User Streaks - **IN PROGRESS**
-**Status:** In Progress
+### [✓] US-9: User Streaks - **APPROVED**
+**Status:** Approved by User  
+**Completed:** April 4, 2026
 
+#### Acceptance Criteria Validation:
+**[✓] Streak counts consecutive days with at least one log**
+**[✓] Resets to 0 if a day is missed**
+**[✓] Displayed prominently on dashboard**
+**[✓] Shows longest streak achieved**
+
+---
+
+### [✓] US-10: Data Export - **READY FOR REVIEW**
+**Status:** Implementation Complete  
+**Completed:** April 4, 2026
+
+#### Acceptance Criteria Validation:
+
+**[✓] CSV includes all logs with timestamps and users**
+- Implementation: Custom SQL query concatenates joined references.
+- Verification: Exported content reflects data accurately.
+
+**[✓] Date range can be selected**
+- Implementation: `startDate` and `endDate` fields in `reports/page.tsx` pass filters to the API.
+- Verification: Can select varying start and end boundaries.
+
+**[✓] File downloads immediately**
+- Implementation: Headers return `attachment; filename=` payload.
+
+**[✓] Filename includes organization name and date range**
+- Implementation: The backend retrieves org slug and appends timeframe details.
 
 ---
 
