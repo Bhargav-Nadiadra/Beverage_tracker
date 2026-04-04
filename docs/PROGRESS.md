@@ -165,31 +165,34 @@
 **[✓] Responsive design with hover tooltips**
 
 ---
-### [🔄] US-15: Team Challenges - **IN PROGRESS**
+### [🚀] US-15: Team Challenges - **READY FOR REVIEW**
+**Status:** Implementation Complete & Fixed
+**Completed:** April 5, 2026
 
-## Technical Architecture Update (Migration to `pg`)
-- **Removed Prisma ORM** in favor of direct `pg` (node-postgres) usage.
-- **Database Schema:** Managed via `scripts/setup-db.sql`.
-- **DB Client:** `lib/db.ts` using `pg.Pool`.
-- **Reason:** User request for "simple postgres".
+#### Acceptance Criteria Validation:
+**[✓] Admin Challenge Creation**
+- Implementation: `components/admin/CreateChallengeForm.tsx` & `AdminTools.tsx`.
+- Admins can specify title, dates, and goal type (Most Logs, Tea, Coffee, etc.).
+**[✓] Dashboard Integration**
+- Implementation: `components/dashboard/ActiveChallenges.tsx` integrated into main dashboard.
+- Users see active and upcoming challenges.
+**[✓] Automatic Progress Tracking**
+- Implementation: SQL aggregation in `app/api/challenges/[id]/leaderboard/route.ts`.
+- Logs within challenge timeframe automatically count towards participants' scores.
+**[✓] Challenge Leaderboard**
+- Implementation: Dedicated page at `app/dashboard/challenges/[id]`.
+- Features ranked list of participants with point breakdowns and "Champion" badges.
+**[✓] Next.js 15+ Compatibility Fixed**
+- Resolution: Awaited `params` promise in API routes and fixed ambiguous SQL column references.
 
-## Manual Testing Steps (US-6):
+---
 
-### Test Case 1: Team Feed
-1. Log in with User A.
-2. Log a Coffee.
-3. Log in with User B.
-4. **Expected:** User B sees User A's log in "Recent Team Activity".
+## Technical Architecture Updates
+- **Next.js 15+ Compatibility:** Migrated dynamic route handlers to await `params` as per the new asynchronous API requirements.
+- **Database Schema:** Added `challenges` table to `scripts/setup-db.sql`.
+- **Dependencies:** Installed `lucide-react` for iconography and `@hookform/resolvers` for validation.
 
-### Test Case 2: Leaderboard
-1. Log different amounts for multiple users.
-2. **Expected:** Leaderboard reflects correct order and counts.
+---
 
-## Files Created/Modified (US-6):
-- ✅ `app/dashboard/page.tsx` - Added team activity and leaderboard logic/UI.
+**Type "APPROVED" to finalize US-15.**
 
-## ✅ Story US-6 Implementation Complete
-
-**Status:** Approved
-
-**Type "APPROVED" to proceed to US-7: Admin Reports.**

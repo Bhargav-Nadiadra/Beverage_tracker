@@ -2,10 +2,13 @@ import { auth } from '@/auth';
 import { db } from '@/lib/db';
 import { redirect } from 'next/navigation';
 import BeverageLogger from '@/components/dashboard/BeverageLogger';
-import InviteMemberForm from '@/components/organizations/InviteMemberForm';
+import { AdminTools } from '@/components/dashboard/AdminTools';
 import { calculateStreaks } from '@/lib/streaks';
+
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { ActivityHeatmap } from '@/components/charts/ActivityHeatmap';
+import { ActiveChallenges } from '@/components/dashboard/ActiveChallenges';
+
 
 export default async function DashboardPage() {
     const session = await auth();
@@ -246,10 +249,15 @@ export default async function DashboardPage() {
                         {/* Team Leaderboard */}
                         <TeamLeaderboard leaderboard={leaderboard} teamTotal={teamTotal} />
 
+                        {/* Team Challenges */}
+                        <ActiveChallenges />
+
                         {/* Admin Tools */}
                         {role === 'ADMIN' && (
-                            <InviteMemberForm organizationId={orgId} />
+                            <AdminTools organizationId={orgId} />
                         )}
+
+
                     </div>
                 </div>
             </main>

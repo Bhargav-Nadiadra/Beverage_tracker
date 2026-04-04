@@ -64,4 +64,30 @@ export const createOrganizationSchema = z.object({
         .regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens'),
 });
 
+
 export type CreateOrganizationInput = z.infer<typeof createOrganizationSchema>;
+
+/**
+ * Challenge Creation Schema
+ */
+export const createChallengeSchema = z.object({
+    title: z
+        .string()
+        .min(1, 'Challenge title is required')
+        .max(100, 'Title must be less than 100 characters'),
+    description: z
+        .string()
+        .max(500, 'Description must be less than 500 characters')
+        .optional()
+        .or(z.literal('')),
+    startDate: z.string().min(1, 'Start date is required'),
+    endDate: z.string().min(1, 'End date is required'),
+    targetType: z.enum(['MOST_LOGS', 'LEAST_LOGS', 'MOST_TEA', 'MOST_COFFEE']),
+    targetValue: z.number().int().min(1, 'Target value must be at least 1').optional(),
+}).refine((data) => new Date(data.startDate) < new Date(data.endDate), {
+    message: 'End date must be after start date',
+    path: ['endDate'],
+});
+
+export type CreateChallengeInput = z.infer<typeof createChallengeSchema>;
+

@@ -79,3 +79,21 @@ CREATE INDEX IF NOT EXISTS idx_invitations_token ON invitations(token);
 -- Migrations
 ALTER TABLE users ADD COLUMN IF NOT EXISTS daily_goal INTEGER;
 
+-- Challenges Table
+CREATE TABLE IF NOT EXISTS challenges (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  start_date TIMESTAMP NOT NULL,
+  end_date TIMESTAMP NOT NULL,
+  target_type VARCHAR(50) NOT NULL CHECK (target_type IN ('MOST_LOGS', 'LEAST_LOGS', 'MOST_TEA', 'MOST_COFFEE')),
+  target_value INTEGER,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  created_by UUID NOT NULL REFERENCES users(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_challenges_org ON challenges(organization_id);
+CREATE INDEX IF NOT EXISTS idx_challenges_dates ON challenges(start_date, end_date);
+
+
