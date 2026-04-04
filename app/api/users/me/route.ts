@@ -11,7 +11,7 @@ export async function PATCH(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { dailyGoal, name, avatarUrl, defaultBeverage, notificationsEnabled } = body;
+        const { dailyGoal, name, avatarUrl, defaultBeverage, notificationsEnabled, privacyVisible, timezone } = body;
         
         const updates: string[] = [];
         const values: any[] = [];
@@ -50,6 +50,16 @@ export async function PATCH(request: NextRequest) {
         if (notificationsEnabled !== undefined) {
             updates.push(`notifications_enabled = $${counter++}`);
             values.push(!!notificationsEnabled);
+        }
+
+        if (privacyVisible !== undefined) {
+            updates.push(`privacy_visible = $${counter++}`);
+            values.push(!!privacyVisible);
+        }
+
+        if (timezone !== undefined) {
+            updates.push(`timezone = $${counter++}`);
+            values.push(timezone);
         }
 
         if (updates.length === 0) {

@@ -76,10 +76,12 @@ export default async function DashboardPage() {
          FROM beverage_logs bl
          JOIN users u ON bl.user_id = u.id
          WHERE bl.organization_id = $1
+         AND u.privacy_visible = TRUE
          ORDER BY bl.logged_at DESC
          LIMIT 10`,
         [orgId]
     );
+
 
     // Fetch Team Leaderboard (Today)
     const leaderboardResult = await db.query(
@@ -88,11 +90,13 @@ export default async function DashboardPage() {
          JOIN users u ON bl.user_id = u.id
          WHERE bl.organization_id = $1
          AND bl.logged_at >= CURRENT_DATE
+         AND u.privacy_visible = TRUE
          GROUP BY u.name
          ORDER BY count DESC
          LIMIT 5`,
         [orgId]
     );
+
 
     // Fetch Team Total (Today)
     const teamTotalResult = await db.query(

@@ -13,7 +13,7 @@ export default async function SettingsPage() {
     }
 
     const result = await db.query(
-        'SELECT name, daily_goal, avatar_url, default_beverage, notifications_enabled FROM users WHERE id = $1',
+        'SELECT name, daily_goal, avatar_url, default_beverage, notifications_enabled, privacy_visible, timezone FROM users WHERE id = $1',
         [session.user.id]
     );
     const profile = result.rows[0];

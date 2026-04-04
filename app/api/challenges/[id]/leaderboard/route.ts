@@ -62,6 +62,7 @@ export async function GET(
                 AND bl.logged_at >= $2 
                 AND bl.logged_at <= $3
              WHERE om.organization_id = $1
+             AND u.privacy_visible = TRUE
              GROUP BY u.id, u.name
              ORDER BY score ${target_type === 'LEAST_LOGS' ? 'ASC' : 'DESC'}
              LIMIT 10`,

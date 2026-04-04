@@ -193,8 +193,8 @@
 - **Dependencies:** Installed `lucide-react` for iconography and `@hookform/resolvers` for validation.
 
 ---
-### [🚀] US-16: Profile Customization - **READY FOR REVIEW**
-**Status:** Implementation Complete
+### [✓] US-16: Profile Customization - **APPROVED**
+**Status:** Approved by User
 **Completed:** April 5, 2026
 
 #### Acceptance Criteria Validation:
@@ -208,6 +208,23 @@
 - Implementation: Replaced individual forms with a cohesive, premium profile management interface.
 
 ---
+### [🚀] US-17: Advanced User Management - **READY FOR REVIEW**
+**Status:** Implementation Complete
+**Completed:** April 5, 2026
 
-**Type "APPROVED" to finalize US-16.**
+#### Acceptance Criteria Validation:
+**[✓] Secure Password Updates**
+- Implementation: `app/api/auth/change-password/route.ts` & Security section in `ProfileSettingsForm.tsx`.
+- Users must provide their current password to set a new one.
+**[✓] Account Deletion (Danger Zone)**
+- Implementation: `app/api/users/me/delete/route.ts` with permanent removal of all user data.
+- Feature includes a multi-step confirmation modal to prevent accidental deletion.
+**[✓] Privacy Toggles**
+- Implementation: `privacy_visible` preference. Users can now choose to hide their consumption from the team leaderboard.
+**[✓] Global Timezone Support**
+- Implementation: `timezone` selector to ensure tracking aligns with the user's local day, regardless of server location.
+
+---
+
+**Type "APPROVED" to finalize US-17.**
 
