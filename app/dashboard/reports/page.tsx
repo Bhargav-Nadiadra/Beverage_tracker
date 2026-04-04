@@ -1,6 +1,8 @@
 import { auth } from '@/auth';
 import { db } from '@/lib/db';
 import { redirect } from 'next/navigation';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { PeakHourHeatmap } from '@/components/charts/PeakHourHeatmap';
 
 export default async function AdminReportsPage() {
     const session = await auth();
@@ -62,26 +64,49 @@ export default async function AdminReportsPage() {
         [orgId]
     );
 
+    // 3. Peak hour heatmap data
+    const peakHourResult = await db.query(
+        `SELECT 
+            EXTRACT(DOW FROM logged_at) as day_of_week,
+            EXTRACT(HOUR FROM logged_at) as hour,
+            COUNT(*) as count
+         FROM beverage_logs
+         WHERE organization_id = $1
+         GROUP BY day_of_week, hour
+         ORDER BY day_of_week, hour ASC`,
+        [orgId]
+    );
+
+    const peakHourData = peakHourResult.rows.map(row => ({
+        day_of_week: parseInt(row.day_of_week),
+        hour: parseInt(row.hour),
+        count: parseInt(row.count)
+    }));
+
     return (
-        <div className="min-h-screen bg-gray-50">
-            <nav className="bg-white shadow-sm border-b border-gray-200">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+            <nav className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-800">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16">
-                        <div className="flex">
-                            <div className="flex-shrink-0 flex items-center">
-                                <span className="text-xl font-bold text-green-600">Beverage Tracker</span>
+                        <div className="flex text-nowrap items-center">
+                            <div className="flex-shrink-0 flex items-center mr-8">
+                                <span className="text-xl font-bold text-green-600 dark:text-green-500">Beverage Tracker</span>
                             </div>
-                            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                                <a href="/dashboard" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            <div className="hidden sm:flex sm:space-x-8 h-full">
+                                <a href="/dashboard" className="border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-300 inline-flex items-center px-1 pt-4 border-b-2 text-sm font-medium">
                                     Dashboard
                                 </a>
-                                <a href="/dashboard/reports" className="border-green-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                <a href="/dashboard/reports" className="border-green-500 text-gray-900 dark:text-gray-100 inline-flex items-center px-1 pt-4 border-b-2 text-sm font-medium">
                                     Reports
+                                </a>
+                                <a href="/dashboard/settings" className="border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-300 inline-flex items-center px-1 pt-4 border-b-2 text-sm font-medium">
+                                    Settings
                                 </a>
                             </div>
                         </div>
-                        <div className="flex items-center">
-                            <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold border border-green-200">
+                        <div className="flex items-center gap-4">
+                            <ThemeToggle />
+                            <div className="h-8 w-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-700 dark:text-green-500 font-bold border border-green-200 dark:border-green-800">
                                 {session.user.name?.[0]?.toUpperCase() || 'U'}
                             </div>
                         </div>
@@ -92,20 +117,20 @@ export default async function AdminReportsPage() {
             <main className="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8 space-y-8">
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Organization Reports</h1>
-                        <p className="mt-1 text-sm text-gray-500">Insights for {membership.org_name}</p>
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Organization Reports</h1>
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Insights for {membership.org_name}</p>
                     </div>
                     <form action="/api/organizations/export" method="GET" className="flex flex-col sm:flex-row items-end gap-3">
                         <input type="hidden" name="orgId" value={orgId} />
                         <div className="flex flex-col">
-                            <label className="text-xs text-gray-500 mb-1 font-medium">Start Date</label>
-                            <input type="date" name="startDate" className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm h-[38px] w-full sm:w-36 text-gray-700 focus:ring-green-500 focus:border-green-500" />
+                            <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">Start Date</label>
+                            <input type="date" name="startDate" className="border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg px-3 py-1.5 text-sm h-[38px] w-full sm:w-36 text-gray-700 dark:text-gray-300 focus:ring-green-500 focus:border-green-500" />
                         </div>
                         <div className="flex flex-col">
-                            <label className="text-xs text-gray-500 mb-1 font-medium">End Date</label>
-                            <input type="date" name="endDate" className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm h-[38px] w-full sm:w-36 text-gray-700 focus:ring-green-500 focus:border-green-500" />
+                            <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 font-medium">End Date</label>
+                            <input type="date" name="endDate" className="border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg px-3 py-1.5 text-sm h-[38px] w-full sm:w-36 text-gray-700 dark:text-gray-300 focus:ring-green-500 focus:border-green-500" />
                         </div>
-                        <button type="submit" className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-blue-600 rounded-lg text-blue-600 hover:bg-blue-50 transition font-semibold text-sm h-[38px]">
+                        <button type="submit" className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-blue-600 dark:border-blue-500 rounded-lg text-blue-600 dark:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition font-semibold text-sm h-[38px]">
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
@@ -115,31 +140,31 @@ export default async function AdminReportsPage() {
                 </div>
 
                 {/* 7-Day Trend Card */}
-                <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-6">Last 7 Days Consumption</h3>
+                <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6">Last 7 Days Consumption</h3>
                     <div className="space-y-4">
                         {trendResult.rows.length === 0 ? (
-                            <p className="text-center text-gray-500 py-10">No data found for the last 7 days.</p>
+                            <p className="text-center text-gray-500 dark:text-gray-400 py-10">No data found for the last 7 days.</p>
                         ) : (
                             <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
+                                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
                                     <thead>
                                         <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-green-600 uppercase tracking-wider">Tea</th>
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-amber-700 uppercase tracking-wider">Coffee</th>
-                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-800 uppercase tracking-wider">Total</th>
+                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                                            <th className="px-6 py-3 text-left text-xs font-semibold text-green-600 dark:text-green-500 uppercase tracking-wider">Tea</th>
+                                            <th className="px-6 py-3 text-left text-xs font-semibold text-amber-700 dark:text-amber-500 uppercase tracking-wider">Coffee</th>
+                                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-800 dark:text-gray-300 uppercase tracking-wider">Total</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-gray-200">
+                                    <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
                                         {trendResult.rows.map((row) => (
                                             <tr key={row.date}>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                                                     {new Date(row.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">{row.tea_count}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-amber-700">{row.coffee_count}</td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">{parseInt(row.tea_count) + parseInt(row.coffee_count)}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600 dark:text-green-400">{row.tea_count}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-amber-700 dark:text-amber-500">{row.coffee_count}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-gray-100">{parseInt(row.tea_count) + parseInt(row.coffee_count)}</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -149,37 +174,39 @@ export default async function AdminReportsPage() {
                     </div>
                 </div>
 
-                {/* Member Breakdown Table */}
-                <div className="bg-white shadow rounded-lg overflow-hidden border border-gray-100">
-                    <div className="px-6 py-5 border-b border-gray-200">
-                        <h3 className="text-lg font-semibold text-gray-900">Member Breakdown</h3>
+                {/* Peak Hour Heatmap (Admin exclusive insight) */}
+                <PeakHourHeatmap data={peakHourData} title="Peak Daily Usage Hours" />
+
+                <div className="bg-white dark:bg-gray-900 shadow rounded-lg overflow-hidden border border-gray-100 dark:border-gray-800">
+                    <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-800">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Member Breakdown</h3>
                     </div>
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+                            <thead className="bg-gray-50 dark:bg-gray-800">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tea Total</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Coffee Total</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Active</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">User</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tea Total</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Coffee Total</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Total</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Last Active</th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
+                            <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
                                 {membersResult.rows.map((member) => (
                                     <tr key={member.email}>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center">
                                                 <div className="ml-0">
-                                                    <div className="text-sm font-medium text-gray-900">{member.name}</div>
-                                                    <div className="text-sm text-gray-500">{member.email}</div>
+                                                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{member.name}</div>
+                                                    <div className="text-sm text-gray-500 dark:text-gray-400">{member.email}</div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">{member.tea_total || 0}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-amber-700 font-medium">{member.coffee_total || 0}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">{member.total_count || 0}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 dark:text-green-400 font-medium">{member.tea_total || 0}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-amber-700 dark:text-amber-500 font-medium">{member.coffee_total || 0}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-gray-100">{member.total_count || 0}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                             {member.last_active ? new Date(member.last_active).toLocaleString() : 'Never'}
                                         </td>
                                     </tr>

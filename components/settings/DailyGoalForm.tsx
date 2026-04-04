@@ -43,7 +43,7 @@ export default function DailyGoalForm({ currentGoal }: { currentGoal: number | n
     return (
         <form onSubmit={handleSubmit} className="max-w-md">
             <div className="mb-4">
-                <label htmlFor="dailyGoal" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="dailyGoal" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Target Daily Beverages
                 </label>
                 <div className="flex gap-4 items-start">
@@ -56,9 +56,9 @@ export default function DailyGoalForm({ currentGoal }: { currentGoal: number | n
                             value={goal}
                             onChange={(e) => setGoal(e.target.value)}
                             placeholder="e.g. 5 (Leave blank to disable)"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                            className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-green-500 focus:border-green-500"
                         />
-                        <p className="mt-2 text-xs text-gray-500">
+                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                             We'll help you track your progress without exceeding your limit.
                         </p>
                     </div>
@@ -66,7 +66,7 @@ export default function DailyGoalForm({ currentGoal }: { currentGoal: number | n
             </div>
 
             {message && (
-                <div className={`p-3 rounded mb-4 text-sm font-medium ${message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                <div className={`p-3 rounded mb-4 text-sm font-medium ${message.type === 'success' ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400'}`}>
                     {message.text}
                 </div>
             )}

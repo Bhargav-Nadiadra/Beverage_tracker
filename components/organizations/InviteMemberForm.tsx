@@ -60,15 +60,15 @@ export default function InviteMemberForm({ organizationId }: InviteMemberFormPro
     };
 
     return (
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Invite Team Members</h3>
-            <p className="text-sm text-gray-500 mb-6">
+        <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Invite Team Members</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
                 Grow your team and track consumption together.
             </p>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Email Address
                     </label>
                     <div className="flex gap-2">
@@ -78,12 +78,12 @@ export default function InviteMemberForm({ organizationId }: InviteMemberFormPro
                                 type="email"
                                 {...register('email')}
                                 placeholder="colleague@example.com"
-                                className={`block w-full px-4 py-2.5 rounded-lg border ${errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
+                                className={`block w-full px-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg border ${errors.email ? 'border-red-500 dark:border-red-600 focus:ring-red-500' : 'border-gray-300 dark:border-gray-700 focus:ring-blue-500'
                                     } focus:outline-none focus:ring-2 transition duration-200`}
                                 disabled={loading}
                             />
                             {errors.email && (
-                                <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>
+                                <p className="mt-1 text-xs text-red-500 dark:text-red-400">{errors.email.message}</p>
                             )}
                         </div>
                         <button
@@ -98,7 +98,7 @@ export default function InviteMemberForm({ organizationId }: InviteMemberFormPro
 
                 {message && (
                     <div
-                        className={`p-3 rounded-lg text-sm ${message.type === 'success' ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'
+                        className={`p-3 rounded-lg text-sm ${message.type === 'success' ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-100 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-100 dark:border-red-800'
                             }`}
                     >
                         {message.text}

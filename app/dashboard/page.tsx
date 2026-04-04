@@ -4,6 +4,8 @@ import { redirect } from 'next/navigation';
 import BeverageLogger from '@/components/dashboard/BeverageLogger';
 import InviteMemberForm from '@/components/organizations/InviteMemberForm';
 import { calculateStreaks } from '@/lib/streaks';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { ActivityHeatmap } from '@/components/charts/ActivityHeatmap';
 
 export default async function DashboardPage() {
     const session = await auth();
@@ -129,6 +131,24 @@ export default async function DashboardPage() {
         coffee: parseInt(row.coffee)
     }));
 
+    // Fetch 90-day activity for heatmap
+    const activityHeatmapResult = await db.query(
+        `SELECT 
+            DATE(logged_at) as date,
+            COUNT(*) as count
+         FROM beverage_logs
+         WHERE user_id = $1
+         AND logged_at >= CURRENT_DATE - INTERVAL '90 days'
+         GROUP BY DATE(logged_at)
+         ORDER BY date ASC`,
+        [userId]
+    );
+
+    const activityHeatmapData = activityHeatmapResult.rows.map(row => ({
+        date: row.date.toISOString(),
+        count: parseInt(row.count)
+    }));
+
     // Fetch dates for streak calculation
     const streakDatesResult = await db.query(
         `SELECT DISTINCT DATE(logged_at AT TIME ZONE 'UTC') as log_date
@@ -147,33 +167,34 @@ export default async function DashboardPage() {
     const role = membership.role;
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <nav className="bg-white shadow-sm border-b border-gray-200">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+            <nav className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-800">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16">
                         <div className="flex text-nowrap items-center">
                             <div className="flex-shrink-0 flex items-center mr-8">
-                                <span className="text-xl font-bold text-green-600">Beverage Tracker</span>
+                                <span className="text-xl font-bold text-green-600 dark:text-green-500">Beverage Tracker</span>
                             </div>
                             <div className="hidden sm:flex sm:space-x-8 h-full">
-                                <a href="/dashboard" className="border-green-500 text-gray-900 inline-flex items-center px-1 pt-4 border-b-2 text-sm font-medium">
+                                <a href="/dashboard" className="border-green-500 text-gray-900 dark:text-gray-100 inline-flex items-center px-1 pt-4 border-b-2 text-sm font-medium">
                                     Dashboard
                                 </a>
                                 {role === 'ADMIN' && (
-                                    <a href="/dashboard/reports" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-4 border-b-2 text-sm font-medium">
+                                    <a href="/dashboard/reports" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 inline-flex items-center px-1 pt-4 border-b-2 text-sm font-medium">
                                         Reports
                                     </a>
                                 )}
-                                <a href="/dashboard/settings" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-4 border-b-2 text-sm font-medium">
+                                <a href="/dashboard/settings" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 inline-flex items-center px-1 pt-4 border-b-2 text-sm font-medium">
                                     Settings
                                 </a>
                             </div>
                         </div>
-                        <div className="flex items-center">
-                            <span className="text-gray-700 mr-4">
-                                {orgName} <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded ml-2">{role}</span>
+                        <div className="flex items-center gap-4">
+                            <ThemeToggle />
+                            <span className="text-gray-700 dark:text-gray-300 hidden sm:inline-flex">
+                                {orgName} <span className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-2 py-1 rounded ml-2">{role}</span>
                             </span>
-                            <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold border border-green-200">
+                            <div className="h-8 w-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-700 dark:text-green-500 font-bold border border-green-200 dark:border-green-800">
                                 {session.user.name?.[0]?.toUpperCase() || 'U'}
                             </div>
                         </div>
@@ -185,10 +206,10 @@ export default async function DashboardPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div className="md:col-span-2 space-y-8">
                         {/* Personal Logger */}
-                        <div className="bg-white overflow-hidden shadow rounded-lg divide-y divide-gray-200">
+                        <div className="bg-white dark:bg-gray-900 overflow-hidden shadow rounded-lg divide-y divide-gray-200 dark:divide-gray-800">
                             <div className="px-4 py-5 sm:px-6">
-                                <h1 className="text-2xl font-bold text-gray-900">My Dashboard</h1>
-                                <p className="mt-1 text-sm text-gray-500">
+                                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">My Dashboard</h1>
+                                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                                     Welcome back, {session.user.name}. Here's your daily summary.
                                 </p>
                             </div>
@@ -210,6 +231,11 @@ export default async function DashboardPage() {
 
                             {/* Personal Trends */}
                             <PersonalTrends weeklyStats={weeklyStats} />
+
+                            {/* Personal Activity Heatmap */}
+                            <div className="xl:col-span-2">
+                                <ActivityHeatmap data={activityHeatmapData} title="Yearly Intensity" />
+                            </div>
                         </div>
 
                         {/* Recent Team Activity */}
@@ -236,14 +262,14 @@ function PersonalTrends({ weeklyStats }: { weeklyStats: any[] }) {
     const maxVal = Math.max(...weeklyStats.map(s => s.tea + s.coffee), 1);
 
     return (
-        <div className="bg-white shadow rounded-lg overflow-hidden border border-gray-100">
-            <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-                <h3 className="text-lg leading-6 font-semibold text-gray-900">Weekly Trends</h3>
-                <p className="text-xs text-gray-500 mt-1">Your consumption over the last 7 days</p>
+        <div className="bg-white dark:bg-gray-900 shadow rounded-lg overflow-hidden border border-gray-100 dark:border-gray-800">
+            <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-800">
+                <h3 className="text-lg leading-6 font-semibold text-gray-900 dark:text-gray-100">Weekly Trends</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Your consumption over the last 7 days</p>
             </div>
             <div className="px-4 py-8 sm:p-6">
                 {weeklyStats.length === 0 ? (
-                    <div className="text-center py-6 text-gray-500 italic text-sm">No data for the past week.</div>
+                    <div className="text-center py-6 text-gray-500 dark:text-gray-400 italic text-sm">No data for the past week.</div>
                 ) : (
                     <div className="grid grid-cols-7 gap-2 items-end h-40">
                         {weeklyStats.map((day) => (
@@ -274,14 +300,14 @@ function PersonalTrends({ weeklyStats }: { weeklyStats: any[] }) {
                         ))}
                     </div>
                 )}
-                <div className="mt-6 flex justify-center gap-4 text-xs font-medium border-t border-gray-50 pt-4">
+                <div className="mt-6 flex justify-center gap-4 text-xs font-medium border-t border-gray-50 dark:border-gray-800 pt-4">
                     <div className="flex items-center gap-1.5">
                         <div className="w-2.5 h-2.5 bg-green-500 rounded-sm"></div>
-                        <span className="text-gray-600">Tea</span>
+                        <span className="text-gray-600 dark:text-gray-300">Tea</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                         <div className="w-2.5 h-2.5 bg-amber-700 rounded-sm"></div>
-                        <span className="text-gray-600">Coffee</span>
+                        <span className="text-gray-600 dark:text-gray-300">Coffee</span>
                     </div>
                 </div>
             </div>
@@ -291,28 +317,28 @@ function PersonalTrends({ weeklyStats }: { weeklyStats: any[] }) {
 
 function TeamActivity({ activity }: { activity: any[] }) {
     return (
-        <div className="bg-white shadow rounded-lg overflow-hidden border border-gray-100">
-            <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-                <h3 className="text-lg leading-6 font-semibold text-gray-900">Recent Team Activity</h3>
+        <div className="bg-white dark:bg-gray-900 shadow rounded-lg overflow-hidden border border-gray-100 dark:border-gray-800">
+            <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-800">
+                <h3 className="text-lg leading-6 font-semibold text-gray-900 dark:text-gray-100">Recent Team Activity</h3>
             </div>
             <div className="flow-root">
-                <ul role="list" className="divide-y divide-gray-200">
+                <ul role="list" className="divide-y divide-gray-200 dark:divide-gray-800">
                     {activity.length === 0 ? (
-                        <li className="px-4 py-8 text-center text-gray-500 italic text-sm">No activity yet. Be the first!</li>
+                        <li className="px-4 py-8 text-center text-gray-500 dark:text-gray-400 italic text-sm">No activity yet. Be the first!</li>
                     ) : (
                         activity.map((log) => (
-                            <li key={log.id} className="px-4 py-4 hover:bg-gray-50 transition duration-150">
+                            <li key={log.id} className="px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition duration-150">
                                 <div className="flex items-center space-x-4">
                                     <div className="flex-shrink-0">
-                                        <div className="h-10 w-10 rounded-xl bg-gray-50 flex items-center justify-center text-xl shadow-sm border border-gray-100">
+                                        <div className="h-10 w-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-xl shadow-sm border border-gray-100 dark:border-gray-700">
                                             {log.beverage_type === 'TEA' ? '🍵' : '☕'}
                                         </div>
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-semibold text-gray-900 truncate">
+                                        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
                                             {log.user_name}
                                         </p>
-                                        <p className="text-xs text-gray-500 flex items-center gap-1">
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
                                             Logged a {log.beverage_type.toLowerCase()} • {new Date(log.logged_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </p>
                                     </div>
@@ -328,31 +354,31 @@ function TeamActivity({ activity }: { activity: any[] }) {
 
 function TeamLeaderboard({ leaderboard, teamTotal }: { leaderboard: any[], teamTotal: number }) {
     return (
-        <div className="bg-white shadow rounded-lg overflow-hidden border border-gray-100">
-            <div className="px-4 py-5 sm:px-6 border-b border-gray-200 bg-gradient-to-r from-green-50 to-emerald-50">
-                <h3 className="text-lg leading-6 font-semibold text-green-900">Today's Standings</h3>
-                <p className="mt-1 text-sm text-green-700 font-medium">✨ {teamTotal} cups shared by the team!</p>
+        <div className="bg-white dark:bg-gray-900 shadow rounded-lg overflow-hidden border border-gray-100 dark:border-gray-800">
+            <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950">
+                <h3 className="text-lg leading-6 font-semibold text-green-900 dark:text-green-100">Today's Standings</h3>
+                <p className="mt-1 text-sm text-green-700 dark:text-green-300 font-medium">✨ {teamTotal} cups shared by the team!</p>
             </div>
             <div className="px-4 py-5 sm:p-6">
                 <div className="space-y-5">
                     {leaderboard.length === 0 ? (
-                        <p className="text-center text-gray-500 italic text-sm py-4">The leaderboard is empty today.</p>
+                        <p className="text-center text-gray-500 dark:text-gray-400 italic text-sm py-4">The leaderboard is empty today.</p>
                     ) : (
                         leaderboard.map((user, index) => (
                             <div key={user.name} className="flex items-center gap-4">
-                                <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center font-bold ${index === 0 ? 'bg-yellow-100 text-yellow-700' :
-                                    index === 1 ? 'bg-gray-100 text-gray-600' :
-                                        index === 2 ? 'bg-orange-100 text-orange-700' :
-                                            'text-gray-400'
+                                <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center font-bold ${index === 0 ? 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-500' :
+                                    index === 1 ? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400' :
+                                        index === 2 ? 'bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-500' :
+                                            'text-gray-400 dark:text-gray-600'
                                     }`}>
                                     {index + 1}
                                 </div>
                                 <div className="flex-grow">
                                     <div className="flex justify-between items-center mb-1.5">
-                                        <span className="text-sm font-semibold text-gray-900">{user.name}</span>
-                                        <span className="text-xs font-bold px-2 py-0.5 bg-green-100 text-green-700 rounded-full">{user.count}</span>
+                                        <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{user.name}</span>
+                                        <span className="text-xs font-bold px-2 py-0.5 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400 rounded-full">{user.count}</span>
                                     </div>
-                                    <div className="w-full bg-gray-100 rounded-full h-2 shadow-inner">
+                                    <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2 shadow-inner">
                                         <div
                                             className="bg-green-500 h-2 rounded-full transition-all duration-500 shadow-sm"
                                             style={{ width: `${Math.min(100, (user.count / (leaderboard[0]?.count || 1)) * 100)}%` }}
@@ -370,20 +396,20 @@ function TeamLeaderboard({ leaderboard, teamTotal }: { leaderboard: any[], teamT
 
 function UserStreakCard({ streakStats }: { streakStats: { current: number, longest: number } }) {
     return (
-        <div className="bg-white shadow rounded-lg overflow-hidden border border-gray-100 h-full flex flex-col">
-            <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-                <h3 className="text-lg leading-6 font-semibold text-gray-900">Your Streak</h3>
-                <p className="text-xs text-gray-500 mt-1">Keep it up! Log every day to maintain your streak.</p>
+        <div className="bg-white dark:bg-gray-900 shadow rounded-lg overflow-hidden border border-gray-100 dark:border-gray-800 h-full flex flex-col">
+            <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-800">
+                <h3 className="text-lg leading-6 font-semibold text-gray-900 dark:text-gray-100">Your Streak</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Keep it up! Log every day to maintain your streak.</p>
             </div>
             <div className="px-4 py-8 sm:p-6 flex-grow flex items-center justify-center">
                 <div className="w-full flex items-center">
-                    <div className="flex-1 text-center border-r border-gray-100">
-                        <div className="text-5xl font-black text-orange-500 mb-2 drop-shadow-sm">🔥 {streakStats.current}</div>
-                        <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">Day Streak</div>
+                    <div className="flex-1 text-center border-r border-gray-100 dark:border-gray-800">
+                        <div className="text-5xl font-black text-orange-500 dark:text-orange-400 mb-2 drop-shadow-sm">🔥 {streakStats.current}</div>
+                        <div className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Day Streak</div>
                     </div>
                     <div className="flex-1 text-center">
-                        <div className="text-4xl font-black text-gray-700 mb-2">🏆 {streakStats.longest}</div>
-                        <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">Best Streak</div>
+                        <div className="text-4xl font-black text-gray-700 dark:text-gray-300 mb-2">🏆 {streakStats.longest}</div>
+                        <div className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Best Streak</div>
                     </div>
                 </div>
             </div>

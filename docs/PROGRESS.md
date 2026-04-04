@@ -127,15 +127,45 @@
 
 ---
 
-### [🔄] US-12: Daily Goals - **IN PROGRESS**
-**Status:** In Progress
+### [✓] US-12: Daily Goals - **APPROVED**
+**Status:** Approved by User  
+**Completed:** April 4, 2026
+
+#### Acceptance Criteria Validation:
+**[✓] Goal can be set in user settings**
+**[✓] Dashboard shows progress towards goal**
+**[✓] Warning displayed if goal is exceeded**
+**[✓] Goal is optional (can be disabled)**
 
 ---
 
-## Phase 2: Enhanced Analytics & Settings (Coming Soon)
-- Daily Goals
-- Slack Integration
-- Advanced Heatmaps
+### [✓] US-13: Dark Mode - **APPROVED**
+**Status:** Approved by User
+**Completed:** April 4, 2026
+
+#### Acceptance Criteria Validation:
+**[✓] Implement ThemeProvider (next-themes)**
+**[✓] Add a ThemeToggle component**
+**[✓] Update existing pages and components with appropriate styling to ensure they look good in light and dark mode**
+**[✓] All screens have appropriate dark colors**
+
+---
+### [✓] US-14: Advanced Heatmaps - **APPROVED**
+**Status:** Approved by User
+**Completed:** April 4, 2026
+
+#### Acceptance Criteria Validation:
+**[✓] Implementation of activity heatmap (90-day)**
+- Shows consumption intensity across last quarter.
+- Supports dark mode.
+**[✓] Implementation of peak usage hours heatmap (7x24)**
+- Matrix of days vs hours showing peak organization usage times.
+**[✓] Mobile response and accessibility fixes**
+- Added overflow-x-auto for small screens.
+**[✓] Responsive design with hover tooltips**
+
+---
+### [🔄] US-15: Team Challenges - **IN PROGRESS**
 
 ## Technical Architecture Update (Migration to `pg`)
 - **Removed Prisma ORM** in favor of direct `pg` (node-postgres) usage.
