@@ -16,6 +16,8 @@ interface BeverageLoggerProps {
     initialLastLog: string | null;
     todayLogs: Log[];
     dailyGoal: number | null;
+    defaultBeverage: 'TEA' | 'COFFEE';
+    notificationsEnabled: boolean;
 }
 
 export default function BeverageLogger({
@@ -24,7 +26,9 @@ export default function BeverageLogger({
     initialFirstLog,
     initialLastLog,
     todayLogs: serverLogs,
-    dailyGoal
+    dailyGoal,
+    defaultBeverage,
+    notificationsEnabled
 }: BeverageLoggerProps) {
     const [teaCount, setTeaCount] = useState(initialTeaCount);
     const [coffeeCount, setCoffeeCount] = useState(initialCoffeeCount);
@@ -127,41 +131,77 @@ export default function BeverageLogger({
                 <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-8 uppercase tracking-widest">Quick Log</h2>
 
                 <div className="flex flex-wrap gap-12 justify-center w-full">
-                    {/* Coffee Button */}
-                    <div className="flex flex-col items-center gap-4">
-                        <button
-                            onClick={() => logBeverage('COFFEE')}
-                            disabled={loading !== null}
-                            className="w-32 h-32 rounded-3xl flex flex-col items-center justify-center bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950 dark:to-amber-900 hover:from-amber-100 hover:to-amber-200 dark:hover:from-amber-900 dark:hover:to-amber-800 text-amber-900 dark:text-amber-100 border-2 border-amber-200 dark:border-amber-800 transition-all active:scale-90 shadow-sm hover:shadow-md disabled:opacity-50"
-                        >
-                            <span className="text-5xl mb-2">☕</span>
-                            <span className="font-bold text-xs">COFFEE</span>
-                        </button>
-                        <div className="text-amber-800 dark:text-amber-200 font-bold bg-amber-50 dark:bg-amber-900/50 px-4 py-1 rounded-full text-sm border border-amber-200 dark:border-amber-800">
-                            Today: {coffeeCount}
-                        </div>
-                    </div>
+                    {defaultBeverage === 'COFFEE' ? (
+                        <>
+                            {/* Coffee Button */}
+                            <div className="flex flex-col items-center gap-4 group">
+                                <button
+                                    onClick={() => logBeverage('COFFEE')}
+                                    disabled={loading !== null}
+                                    className="w-32 h-32 rounded-3xl flex flex-col items-center justify-center bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950 dark:to-amber-900 hover:from-amber-100 hover:to-amber-200 dark:hover:from-amber-900 dark:hover:to-amber-800 text-amber-900 dark:text-amber-100 border-2 border-amber-300 dark:border-amber-700 transition-all active:scale-90 shadow-md hover:shadow-xl disabled:opacity-50 ring-4 ring-amber-400/20"
+                                >
+                                    <span className="text-5xl mb-2 group-hover:scale-125 transition-transform duration-300">☕</span>
+                                    <span className="font-black text-xs tracking-widest">COFFEE</span>
+                                </button>
+                                <div className="text-amber-800 dark:text-amber-200 font-bold bg-amber-50 dark:bg-amber-900/50 px-4 py-1 rounded-full text-sm border border-amber-200 dark:border-amber-800">
+                                    Today: {coffeeCount}
+                                </div>
+                            </div>
 
-                    {/* Tea Button */}
-                    <div className="flex flex-col items-center gap-4">
-                        <button
-                            onClick={() => logBeverage('TEA')}
-                            disabled={loading !== null}
-                            className="w-32 h-32 rounded-3xl flex flex-col items-center justify-center bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900 hover:from-emerald-100 hover:to-emerald-200 dark:hover:from-emerald-900 dark:hover:to-emerald-800 text-emerald-900 dark:text-emerald-100 border-2 border-emerald-200 dark:border-emerald-800 transition-all active:scale-90 shadow-sm hover:shadow-md disabled:opacity-50"
-                        >
-                            <span className="text-5xl mb-2">🍵</span>
-                            <span className="font-bold text-xs">TEA</span>
-                        </button>
-                        <div className="text-emerald-800 dark:text-emerald-200 font-bold bg-emerald-50 dark:bg-emerald-900/50 px-4 py-1 rounded-full text-sm border border-emerald-200 dark:border-emerald-800">
-                            Today: {teaCount}
-                        </div>
-                    </div>
+                            {/* Tea Button */}
+                            <div className="flex flex-col items-center gap-4 group opacity-80 hover:opacity-100 transition-opacity">
+                                <button
+                                    onClick={() => logBeverage('TEA')}
+                                    disabled={loading !== null}
+                                    className="w-28 h-28 rounded-3xl flex flex-col items-center justify-center bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900 hover:from-emerald-100 hover:to-emerald-200 dark:hover:from-emerald-900 dark:hover:to-emerald-800 text-emerald-900 dark:text-emerald-100 border-2 border-emerald-200 dark:border-emerald-800 transition-all active:scale-90 shadow-sm hover:shadow-md disabled:opacity-50"
+                                >
+                                    <span className="text-4xl mb-2 group-hover:scale-110 transition-transform">🍵</span>
+                                    <span className="font-bold text-[10px] tracking-widest">TEA</span>
+                                </button>
+                                <div className="text-emerald-800 dark:text-emerald-200 font-bold bg-emerald-50 dark:bg-emerald-900/50 px-4 py-1 rounded-full text-xs border border-emerald-200 dark:border-emerald-800">
+                                    Today: {teaCount}
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            {/* Tea Button */}
+                            <div className="flex flex-col items-center gap-4 group">
+                                <button
+                                    onClick={() => logBeverage('TEA')}
+                                    disabled={loading !== null}
+                                    className="w-32 h-32 rounded-3xl flex flex-col items-center justify-center bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900 hover:from-emerald-100 hover:to-emerald-200 dark:hover:from-emerald-900 dark:hover:to-emerald-800 text-emerald-900 dark:text-emerald-100 border-2 border-emerald-300 dark:border-emerald-700 transition-all active:scale-90 shadow-md hover:shadow-xl disabled:opacity-50 ring-4 ring-emerald-400/20"
+                                >
+                                    <span className="text-5xl mb-2 group-hover:scale-125 transition-transform duration-300">🍵</span>
+                                    <span className="font-black text-xs tracking-widest">TEA</span>
+                                </button>
+                                <div className="text-emerald-800 dark:text-emerald-200 font-bold bg-emerald-50 dark:bg-emerald-900/50 px-4 py-1 rounded-full text-sm border border-emerald-200 dark:border-emerald-800">
+                                    Today: {teaCount}
+                                </div>
+                            </div>
+
+                            {/* Coffee Button */}
+                            <div className="flex flex-col items-center gap-4 group opacity-80 hover:opacity-100 transition-opacity">
+                                <button
+                                    onClick={() => logBeverage('COFFEE')}
+                                    disabled={loading !== null}
+                                    className="w-28 h-28 rounded-3xl flex flex-col items-center justify-center bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950 dark:to-amber-900 hover:from-amber-100 hover:to-amber-200 dark:hover:from-amber-900 dark:hover:to-amber-800 text-amber-900 dark:text-amber-100 border-2 border-amber-200 dark:border-amber-800 transition-all active:scale-90 shadow-sm hover:shadow-md disabled:opacity-50"
+                                >
+                                    <span className="text-4xl mb-2 group-hover:scale-110 transition-transform">☕</span>
+                                    <span className="font-bold text-[10px] tracking-widest">COFFEE</span>
+                                </button>
+                                <div className="text-amber-800 dark:text-amber-200 font-bold bg-amber-50 dark:bg-amber-900/50 px-4 py-1 rounded-full text-xs border border-amber-200 dark:border-amber-800">
+                                    Today: {coffeeCount}
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {dailyGoal && (
                     <div className="w-full mt-8 px-4">
                         <div className="flex justify-between items-end mb-2">
-                            <span className="text-sm font-bold text-gray-700 dark:text-gray-300">Daily Goal Progress</span>
+                            <span className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-widest">Daily Progress</span>
                             <span className={`text-xs font-bold ${(teaCount + coffeeCount) > dailyGoal ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}>
                                 {teaCount + coffeeCount} / {dailyGoal}
                             </span>
@@ -172,16 +212,17 @@ export default function BeverageLogger({
                                 style={{ width: `${Math.min(100, ((teaCount + coffeeCount) / dailyGoal) * 100)}%` }}
                             ></div>
                         </div>
-                        {(teaCount + coffeeCount) > dailyGoal && (
-                            <p className="mt-2 text-xs text-red-600 dark:text-red-400 font-bold flex items-center gap-1">
+                        {(teaCount + coffeeCount) > dailyGoal && notificationsEnabled && (
+                            <p className="mt-3 p-2 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-lg text-xs text-red-600 dark:text-red-400 font-bold flex items-center gap-1.5 animate-bounce">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                 </svg>
-                                You've exceeded your daily limit!
+                                Daily limit reached! Consider drinking water.
                             </p>
                         )}
                     </div>
                 )}
+
 
                 <div className="mt-10 pt-6 border-t border-gray-50 dark:border-gray-800 w-full grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
                     <div className="flex flex-col">

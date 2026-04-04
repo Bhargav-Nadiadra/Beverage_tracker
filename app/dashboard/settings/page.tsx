@@ -1,7 +1,8 @@
 import { auth } from '@/auth';
 import { db } from '@/lib/db';
 import { redirect } from 'next/navigation';
-import DailyGoalForm from '@/components/settings/DailyGoalForm';
+import ProfileSettingsForm from '@/components/settings/ProfileSettingsForm';
+
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default async function SettingsPage() {
@@ -11,8 +12,11 @@ export default async function SettingsPage() {
         redirect('/login');
     }
 
-    const result = await db.query('SELECT daily_goal FROM users WHERE id = $1', [session.user.id]);
-    const dailyGoal = result.rows[0]?.daily_goal || null;
+    const result = await db.query(
+        'SELECT name, daily_goal, avatar_url, default_beverage, notifications_enabled FROM users WHERE id = $1',
+        [session.user.id]
+    );
+    const profile = result.rows[0];
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -47,12 +51,13 @@ export default async function SettingsPage() {
                 
                 <div className="bg-white dark:bg-gray-900 shadow overflow-hidden sm:rounded-lg border border-gray-100 dark:border-gray-800">
                     <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-800">
-                        <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">Preferences</h3>
-                        <p className="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">Manage your daily tracking goals.</p>
+                        <h3 className="text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Personal Preferences</h3>
+                        <p className="mt-1 max-w-2xl text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-tighter">Your custom beverage tracking dashboard</p>
                     </div>
-                    <div className="px-4 py-5 sm:p-6">
-                        <DailyGoalForm currentGoal={dailyGoal} />
+                    <div className="px-8 py-10">
+                        <ProfileSettingsForm profile={profile} />
                     </div>
+
                 </div>
             </main>
         </div>

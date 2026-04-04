@@ -165,8 +165,8 @@
 **[✓] Responsive design with hover tooltips**
 
 ---
-### [🚀] US-15: Team Challenges - **READY FOR REVIEW**
-**Status:** Implementation Complete & Fixed
+### [✓] US-15: Team Challenges - **APPROVED**
+**Status:** Approved by User
 **Completed:** April 5, 2026
 
 #### Acceptance Criteria Validation:
@@ -193,6 +193,21 @@
 - **Dependencies:** Installed `lucide-react` for iconography and `@hookform/resolvers` for validation.
 
 ---
+### [🚀] US-16: Profile Customization - **READY FOR REVIEW**
+**Status:** Implementation Complete
+**Completed:** April 5, 2026
 
-**Type "APPROVED" to finalize US-15.**
+#### Acceptance Criteria Validation:
+**[✓] Name & Avatar Customization**
+- Implementation: `ProfileSettingsForm.tsx` allows updating display name and choosing a brand color avatar.
+**[✓] Quick Log Preferences**
+- Implementation: `default_beverage` field in DB. `BeverageLogger` reorders buttons to put the preferred drink first and focuses it visually.
+**[✓] Notification Control**
+- Implementation: `notifications_enabled` toggle to enable/disable daily limit alerts on the dashboard.
+**[✓] Unified Settings UI**
+- Implementation: Replaced individual forms with a cohesive, premium profile management interface.
+
+---
+
+**Type "APPROVED" to finalize US-16.**
 

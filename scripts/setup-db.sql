@@ -78,6 +78,9 @@ CREATE INDEX IF NOT EXISTS idx_invitations_token ON invitations(token);
 
 -- Migrations
 ALTER TABLE users ADD COLUMN IF NOT EXISTS daily_goal INTEGER;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS default_beverage VARCHAR(20) DEFAULT 'COFFEE' CHECK (default_beverage IN ('TEA', 'COFFEE'));
+ALTER TABLE users ADD COLUMN IF NOT EXISTS notifications_enabled BOOLEAN DEFAULT TRUE;
+
 
 -- Challenges Table
 CREATE TABLE IF NOT EXISTS challenges (

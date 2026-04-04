@@ -163,8 +163,14 @@ export default async function DashboardPage() {
     const streakDates = streakDatesResult.rows.map(row => new Date(row.log_date));
     const streakStats = calculateStreaks(streakDates);
 
-    const userResult = await db.query('SELECT daily_goal FROM users WHERE id = $1', [userId]);
-    const dailyGoal = userResult.rows[0]?.daily_goal || null;
+    const userResult = await db.query(
+        'SELECT name, daily_goal, default_beverage, notifications_enabled FROM users WHERE id = $1',
+        [userId]
+    );
+    const user = userResult.rows[0];
+    const dailyGoal = user?.daily_goal || null;
+    const defaultBeverage = user?.default_beverage || 'COFFEE';
+    const notificationsEnabled = user?.notifications_enabled ?? true;
 
     const orgName = membership.org_name;
     const role = membership.role;
@@ -224,6 +230,8 @@ export default async function DashboardPage() {
                                     initialLastLog={lastLog}
                                     todayLogs={todayLogs}
                                     dailyGoal={dailyGoal}
+                                    defaultBeverage={defaultBeverage}
+                                    notificationsEnabled={notificationsEnabled}
                                 />
                             </div>
                         </div>
