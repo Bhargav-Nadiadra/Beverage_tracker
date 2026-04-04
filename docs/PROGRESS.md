@@ -225,6 +225,21 @@
 - Implementation: `timezone` selector to ensure tracking aligns with the user's local day, regardless of server location.
 
 ---
+### [🚀] US-18: Organization Administration - **READY FOR REVIEW**
+**Status:** Implementation Complete
+**Completed:** April 5, 2026
 
-**Type "APPROVED" to finalize US-17.**
+#### Acceptance Criteria Validation:
+**[✓] Member Management (Roles)**
+- Implementation: `OrganizationManager.tsx` allows Admins to promote/demote members between 'MEMBER' and 'ADMIN'.
+**[✓] Secure Member Removal**
+- Implementation: Admins can remove members from their organization via the dashboard. Includes confirmation modal for safety.
+**[✓] Bulk Invitation System**
+- Implementation: New textarea in the manager for pasting multiple emails. Supports comma or newline separation.
+**[✓] Admin Exclusive Insights**
+- Implementation: User-level consumption totals and 'Last Active' timestamps are now visible to admins for effective team monitoring.
+
+---
+
+**Type "APPROVED" to finalize US-18.**
 

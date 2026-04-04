@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { redirect } from 'next/navigation';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { PeakHourHeatmap } from '@/components/charts/PeakHourHeatmap';
+import { OrganizationManager } from '@/components/dashboard/OrganizationManager';
 
 export default async function AdminReportsPage() {
     const session = await auth();
@@ -11,7 +12,7 @@ export default async function AdminReportsPage() {
         redirect('/login');
     }
 
-    const userId = session.user.id;
+    const userId = session.user.id as string;
 
     // Fetch user's organization and check admin role
     const orgResult = await db.query(
@@ -30,7 +31,7 @@ export default async function AdminReportsPage() {
         redirect('/dashboard');
     }
 
-    const orgId = membership.org_id;
+    const orgId = membership.org_id as string;
 
     // 1. Weekly Consumption Trend (Last 7 Days)
     const trendResult = await db.query(
@@ -49,8 +50,10 @@ export default async function AdminReportsPage() {
     // 2. Member Breakdown (Total Logs)
     const membersResult = await db.query(
         `SELECT 
+            u.id as user_id,
             u.name,
             u.email,
+            om.role,
             SUM(CASE WHEN bl.beverage_type = 'TEA' THEN 1 ELSE 0 END) as tea_total,
             SUM(CASE WHEN bl.beverage_type = 'COFFEE' THEN 1 ELSE 0 END) as coffee_total,
             COUNT(bl.id) as total_count,
@@ -59,8 +62,8 @@ export default async function AdminReportsPage() {
          JOIN organization_members om ON u.id = om.user_id
          LEFT JOIN beverage_logs bl ON u.id = bl.user_id AND bl.organization_id = $1
          WHERE om.organization_id = $1
-         GROUP BY u.id, u.name, u.email
-         ORDER BY total_count DESC`,
+         GROUP BY u.id, u.name, u.email, om.role
+         ORDER BY (CASE WHEN om.role = 'ADMIN' THEN 0 ELSE 1 END), total_count DESC`,
         [orgId]
     );
 
@@ -177,44 +180,18 @@ export default async function AdminReportsPage() {
                 {/* Peak Hour Heatmap (Admin exclusive insight) */}
                 <PeakHourHeatmap data={peakHourData} title="Peak Daily Usage Hours" />
 
-                <div className="bg-white dark:bg-gray-900 shadow rounded-lg overflow-hidden border border-gray-100 dark:border-gray-800">
-                    <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-800">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Member Breakdown</h3>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
-                            <thead className="bg-gray-50 dark:bg-gray-800">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">User</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tea Total</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Coffee Total</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Total</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Last Active</th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
-                                {membersResult.rows.map((member) => (
-                                    <tr key={member.email}>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center">
-                                                <div className="ml-0">
-                                                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{member.name}</div>
-                                                    <div className="text-sm text-gray-500 dark:text-gray-400">{member.email}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 dark:text-green-400 font-medium">{member.tea_total || 0}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-amber-700 dark:text-amber-500 font-medium">{member.coffee_total || 0}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-gray-100">{member.total_count || 0}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            {member.last_active ? new Date(member.last_active).toLocaleString() : 'Never'}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                {/* Member Management Section */}
+                <OrganizationManager 
+                    members={membersResult.rows.map(m => ({ 
+                        ...m, 
+                        total_count: parseInt(m.total_count), 
+                        tea_total: parseInt(m.tea_total || '0'), 
+                        coffee_total: parseInt(m.coffee_total || '0'),
+                        last_active: m.last_active ? m.last_active.toISOString() : null 
+                    }))} 
+                    orgId={orgId} 
+                    currentUserId={userId} 
+                />
             </main>
         </div>
     );
