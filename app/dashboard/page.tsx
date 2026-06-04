@@ -42,6 +42,7 @@ export default async function DashboardPage() {
         `SELECT 
             SUM(CASE WHEN beverage_type = 'TEA' THEN 1 ELSE 0 END) as tea_count,
             SUM(CASE WHEN beverage_type = 'COFFEE' THEN 1 ELSE 0 END) as coffee_count,
+            SUM(CASE WHEN beverage_type = 'WATER' THEN 1 ELSE 0 END) as water_count,
             MIN(logged_at) as first_log,
             MAX(logged_at) as last_log
          FROM beverage_logs
@@ -52,12 +53,13 @@ export default async function DashboardPage() {
 
     const teaCount = parseInt(statsResult.rows[0]?.tea_count || '0', 10);
     const coffeeCount = parseInt(statsResult.rows[0]?.coffee_count || '0', 10);
+    const waterCount = parseInt(statsResult.rows[0]?.water_count || '0', 10);
     const firstLog = statsResult.rows[0]?.first_log ? new Date(statsResult.rows[0].first_log).toISOString() : null;
     const lastLog = statsResult.rows[0]?.last_log ? new Date(statsResult.rows[0].last_log).toISOString() : null;
 
     // Fetch today's raw logs for deletion management
     const todayLogsResult = await db.query(
-        `SELECT id, beverage_type, logged_at 
+        `SELECT id, beverage_type, size, is_decaf, logged_at 
          FROM beverage_logs 
          WHERE user_id = $1 
          AND logged_at >= CURRENT_DATE
@@ -122,7 +124,8 @@ export default async function DashboardPage() {
         `SELECT 
             DATE(logged_at) as date,
             SUM(CASE WHEN beverage_type = 'TEA' THEN 1 ELSE 0 END) as tea,
-            SUM(CASE WHEN beverage_type = 'COFFEE' THEN 1 ELSE 0 END) as coffee
+            SUM(CASE WHEN beverage_type = 'COFFEE' THEN 1 ELSE 0 END) as coffee,
+            SUM(CASE WHEN beverage_type = 'WATER' THEN 1 ELSE 0 END) as water
          FROM beverage_logs
          WHERE user_id = $1
          AND logged_at >= CURRENT_DATE - INTERVAL '6 days'
@@ -135,8 +138,10 @@ export default async function DashboardPage() {
         ...row,
         date: row.date.toISOString(),
         tea: parseInt(row.tea),
-        coffee: parseInt(row.coffee)
+        coffee: parseInt(row.coffee),
+        water: parseInt(row.water)
     }));
+
 
     // Fetch 90-day activity for heatmap
     const activityHeatmapResult = await db.query(
@@ -230,6 +235,7 @@ export default async function DashboardPage() {
                                 <BeverageLogger
                                     initialTeaCount={teaCount}
                                     initialCoffeeCount={coffeeCount}
+                                    initialWaterCount={waterCount}
                                     initialFirstLog={firstLog}
                                     initialLastLog={lastLog}
                                     todayLogs={todayLogs}
@@ -279,7 +285,8 @@ export default async function DashboardPage() {
 
 // Helper components for the dashboard
 function PersonalTrends({ weeklyStats }: { weeklyStats: any[] }) {
-    const maxVal = Math.max(...weeklyStats.map(s => s.tea + s.coffee), 1);
+    const maxVal = Math.max(...weeklyStats.map(s => s.tea + s.coffee + s.water), 1);
+
 
     return (
         <div className="bg-white dark:bg-gray-900 shadow rounded-lg overflow-hidden border border-gray-100 dark:border-gray-800">
@@ -301,10 +308,16 @@ function PersonalTrends({ weeklyStats }: { weeklyStats: any[] }) {
                                         title={`${day.tea} Tea`}
                                     ></div>
                                     <div
-                                        className="bg-amber-700 w-full rounded-b-sm transition-all duration-300 hover:brightness-110"
+                                        className="bg-amber-700 w-full transition-all duration-300 hover:brightness-110"
                                         style={{ height: `${(day.coffee / maxVal) * 100}%` }}
                                         title={`${day.coffee} Coffee`}
                                     ></div>
+                                    <div
+                                        className="bg-blue-500 w-full rounded-b-sm transition-all duration-300 hover:brightness-110"
+                                        style={{ height: `${(day.water / maxVal) * 100}%` }}
+                                        title={`${day.water} Water`}
+                                    ></div>
+
                                 </div>
                                 <span className="text-[10px] text-gray-400 mt-2 font-medium">
                                     {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' })}
@@ -312,15 +325,16 @@ function PersonalTrends({ weeklyStats }: { weeklyStats: any[] }) {
 
                                 <div className="absolute bottom-full mb-2 hidden group-hover:block z-10">
                                     <div className="bg-gray-900 text-white text-xs rounded py-1 px-2 shadow-lg whitespace-nowrap">
-                                        🍵 {day.tea} | ☕ {day.coffee}
+                                        🍵 {day.tea} | ☕ {day.coffee} | 💧 {day.water}
                                     </div>
+
                                     <div className="w-2 h-2 bg-gray-900 rotate-45 mx-auto -mt-1"></div>
                                 </div>
                             </div>
                         ))}
                     </div>
                 )}
-                <div className="mt-6 flex justify-center gap-4 text-xs font-medium border-t border-gray-50 dark:border-gray-800 pt-4">
+                <div className="mt-6 flex justify-center gap-4 text-[10px] font-black uppercase tracking-widest border-t border-gray-50 dark:border-gray-800 pt-4">
                     <div className="flex items-center gap-1.5">
                         <div className="w-2.5 h-2.5 bg-green-500 rounded-sm"></div>
                         <span className="text-gray-600 dark:text-gray-300">Tea</span>
@@ -329,7 +343,12 @@ function PersonalTrends({ weeklyStats }: { weeklyStats: any[] }) {
                         <div className="w-2.5 h-2.5 bg-amber-700 rounded-sm"></div>
                         <span className="text-gray-600 dark:text-gray-300">Coffee</span>
                     </div>
+                    <div className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 bg-blue-500 rounded-sm"></div>
+                        <span className="text-gray-600 dark:text-gray-300">Water</span>
+                    </div>
                 </div>
+
             </div>
         </div>
     );
@@ -351,8 +370,9 @@ function TeamActivity({ activity }: { activity: any[] }) {
                                 <div className="flex items-center space-x-4">
                                     <div className="flex-shrink-0">
                                         <div className="h-10 w-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                                            {log.beverage_type === 'TEA' ? '🍵' : '☕'}
+                                            {log.beverage_type === 'TEA' ? '🍵' : log.beverage_type === 'COFFEE' ? '☕' : '💧'}
                                         </div>
+
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">

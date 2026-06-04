@@ -4,7 +4,9 @@ import { auth } from '@/auth';
 import { z } from 'zod';
 
 const logBeverageSchema = z.object({
-    beverageType: z.enum(['TEA', 'COFFEE']),
+    beverageType: z.enum(['TEA', 'COFFEE', 'WATER']),
+    size: z.enum(['SMALL', 'MEDIUM', 'LARGE']).optional().default('MEDIUM'),
+    isDecaf: z.boolean().optional().default(false),
 });
 
 export async function POST(request: NextRequest) {
@@ -30,11 +32,9 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const { beverageType } = validationResult.data;
+        const { beverageType, size, isDecaf } = validationResult.data;
 
         // Get user's organization
-        // For MVP, we assume user belongs to one organization.
-        // If multiple, we pick the first one.
         const orgResult = await db.query(
             `SELECT organization_id FROM organization_members WHERE user_id = $1 LIMIT 1`,
             [userId]
@@ -51,10 +51,10 @@ export async function POST(request: NextRequest) {
 
         // Log the beverage
         const result = await db.query(
-            `INSERT INTO beverage_logs (user_id, organization_id, beverage_type)
-       VALUES ($1, $2, $3)
-       RETURNING id, beverage_type, logged_at`,
-            [userId, organizationId, beverageType]
+            `INSERT INTO beverage_logs (user_id, organization_id, beverage_type, size, is_decaf)
+             VALUES ($1, $2, $3, $4, $5)
+             RETURNING id, beverage_type, size, is_decaf, logged_at`,
+            [userId, organizationId, beverageType, size, isDecaf]
         );
 
         return NextResponse.json(

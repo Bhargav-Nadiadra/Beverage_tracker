@@ -51,7 +51,9 @@ CREATE TABLE IF NOT EXISTS beverage_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-  beverage_type VARCHAR(20) NOT NULL CHECK (beverage_type IN ('TEA', 'COFFEE')),
+  beverage_type VARCHAR(20) NOT NULL CHECK (beverage_type IN ('TEA', 'COFFEE', 'WATER')),
+  size VARCHAR(20) NOT NULL DEFAULT 'MEDIUM' CHECK (size IN ('SMALL', 'MEDIUM', 'LARGE')),
+  is_decaf BOOLEAN NOT NULL DEFAULT FALSE,
   logged_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -82,6 +84,13 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS default_beverage VARCHAR(20) DEFAULT 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS notifications_enabled BOOLEAN DEFAULT TRUE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS privacy_visible BOOLEAN DEFAULT TRUE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS timezone VARCHAR(50) DEFAULT 'UTC';
+
+
+-- Update Beverage Logs for Advanced Features
+ALTER TABLE beverage_logs DROP CONSTRAINT IF EXISTS beverage_logs_beverage_type_check;
+ALTER TABLE beverage_logs ADD CONSTRAINT beverage_logs_beverage_type_check CHECK (beverage_type IN ('TEA', 'COFFEE', 'WATER'));
+ALTER TABLE beverage_logs ADD COLUMN IF NOT EXISTS size VARCHAR(20) DEFAULT 'MEDIUM' CHECK (size IN ('SMALL', 'MEDIUM', 'LARGE'));
+ALTER TABLE beverage_logs ADD COLUMN IF NOT EXISTS is_decaf BOOLEAN DEFAULT FALSE;
 
 
 -- Challenges Table

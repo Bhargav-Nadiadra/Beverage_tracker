@@ -240,6 +240,21 @@
 - Implementation: User-level consumption totals and 'Last Active' timestamps are now visible to admins for effective team monitoring.
 
 ---
+### [🚀] US-19: Advanced Beverage Features - **READY FOR REVIEW**
+**Status:** Implementation Complete
+**Completed:** April 5, 2026
 
-**Type "APPROVED" to finalize US-18.**
+#### Acceptance Criteria Validation:
+**[✓] Water Tracking Integration**
+- Implementation: Users can now log water intake. Dashboard charts and goal progress bars updated to handle hydration separately.
+**[✓] Serving Size Selection**
+- Implementation: New 'Options' bar in logger allows selecting SMALL, MEDIUM, or LARGE servings for accurate volume tracking.
+**[✓] Decaf Variant Support**
+- Implementation: Logs can be marked as 'Decaf', enabling users to track intake without caffeine impact logic being triggered inconsistently (though for now, goal is count-based).
+**[✓] Visual Analytics Expansion**
+- Implementation: Weekly Trends chart updated with a blue 'Water' layer. Team activity feed now correctly displays water droplets emoji.
+
+---
+
+**Type "APPROVED" to finalize US-19.**
 
